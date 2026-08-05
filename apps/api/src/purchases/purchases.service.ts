@@ -7,31 +7,35 @@ import { CreatePurchaseDto } from './dto/create-purchase.dto';
 @Injectable()
 export class PurchasesService {
   constructor(private readonly prisma: PrismaService, private readonly sequence: SequenceService) {}
-  findAll(supplierId?: string) { return this.prisma.purchase.findMany({ where: { isVoided: false, ...(supplierId ? { supplierId } : {}) }, include: { supplier: true, items: { include: { product: true } } }, orderBy: { receivedAt: 'desc' } }); }
+  findAll(supplierId?: string) { return this.prisma.purchase.findMany({ where: { isVoided: false, ...(supplierId ? { supplierId } : {}) }, include: { supplier: true, items: { include: { product: true, presentation: true } } }, orderBy: { receivedAt: 'desc' } }); }
   async reportBySupplier() {
     const suppliers = await this.prisma.supplier.findMany({ include: { purchases: { where: { isVoided: false }, select: { total: true } } }, orderBy: { name: 'asc' } });
     return suppliers.map((supplier) => ({ id: supplier.id, name: supplier.name, purchaseCount: supplier.purchases.length, totalPurchased: supplier.purchases.reduce((sum, purchase) => sum.plus(purchase.total), new Prisma.Decimal(0)) }));
   }
   async create(dto: CreatePurchaseDto) {
-    if (new Set(dto.items.map((item) => item.productId)).size !== dto.items.length) throw new BadRequestException('Un producto solo puede aparecer una vez en la compra.');
+    if (new Set(dto.items.map((item) => item.presentationId)).size !== dto.items.length) throw new BadRequestException('Una presentación solo puede aparecer una vez en la compra.');
     const code = await this.sequence.next('PURCHASE', 'CMP');
     return this.prisma.$transaction(async (tx) => {
       const total = dto.items.reduce((sum, item) => sum + item.totalCost, 0);
       if (!(await tx.supplier.findUnique({ where: { id: dto.supplierId } }))) throw new BadRequestException('Proveedor no encontrado.');
       const purchase = await tx.purchase.create({ data: { code, supplierId: dto.supplierId, receivedAt: dto.receivedAt ? new Date(dto.receivedAt) : new Date(), total: new Prisma.Decimal(total) } });
       for (const item of dto.items) {
-        const product = await tx.product.findUnique({ where: { id: item.productId }, include: { inventory: true } });
-        if (!product?.inventory) throw new BadRequestException('Producto no encontrado.');
-        const before = product.inventory.quantity;
-        const quantity = new Prisma.Decimal(item.quantity);
+        const presentation = await tx.productPresentation.findUnique({ where: { id: item.presentationId }, include: { product: { include: { inventory: true } } } });
+        if (!presentation?.isActive || !presentation.product.isActive || !presentation.product.inventory) throw new BadRequestException('La presentación seleccionada no está disponible.');
+        const product = presentation.product;
+        const inventory = product.inventory;
+        if (!inventory) throw new BadRequestException('El producto no tiene inventario inicializado.');
+        const before = inventory.quantity;
+        const packageQuantity = new Prisma.Decimal(item.packageQuantity);
+        const quantity = presentation.contentQuantity.mul(packageQuantity);
         const cost = new Prisma.Decimal(item.totalCost);
         const after = before.plus(quantity);
-        const averageCost = before.mul(product.inventory.averageCost).plus(cost).div(after);
-        const purchaseItem = await tx.purchaseItem.create({ data: { purchaseId: purchase.id, productId: product.id, quantity, totalCost: cost, unitCost: cost.div(quantity) } });
+        const averageCost = before.mul(inventory.averageCost).plus(cost).div(after);
+        const purchaseItem = await tx.purchaseItem.create({ data: { purchaseId: purchase.id, productId: product.id, presentationId: presentation.id, packageQuantity, quantity, totalCost: cost, unitCost: cost.div(quantity) } });
         await tx.inventoryItem.update({ where: { productId: product.id }, data: { quantity: after, averageCost, lastCost: purchaseItem.unitCost } });
         await tx.inventoryMovement.create({ data: { productId: product.id, type: MovementType.PURCHASE, quantity, quantityBefore: before, quantityAfter: after, unitCost: purchaseItem.unitCost, referenceType: 'PURCHASE', referenceId: purchase.id } });
       }
-      return tx.purchase.findUniqueOrThrow({ where: { id: purchase.id }, include: { supplier: true, items: { include: { product: true } } } });
+      return tx.purchase.findUniqueOrThrow({ where: { id: purchase.id }, include: { supplier: true, items: { include: { product: true, presentation: true } } } });
     });
   }
   async void(id: string, reason: string, actorId?: string) {

@@ -14,7 +14,7 @@ class AdjustmentDto { @IsUUID() productId!: string; @IsEnum(MovementType) type!:
 export class InventoryController {
   constructor(private readonly prisma: PrismaService) {}
   @Get() @ApiOperation({ summary: 'Consultar existencias, último costo y costo promedio' })
-  summary() { return this.prisma.inventoryItem.findMany({ include: { product: true }, orderBy: { product: { name: 'asc' } } }); }
+  summary() { return this.prisma.inventoryItem.findMany({ include: { product: { include: { presentations: { where: { isActive: true }, orderBy: { contentQuantity: 'asc' } } } } }, orderBy: { product: { name: 'asc' } } }); }
   @Get('indicators') @ApiOperation({ summary: 'Consultar indicadores y alertas de inventario mínimo' })
   async indicators() {
     const [items, activeCrops] = await Promise.all([this.prisma.inventoryItem.findMany({ where: { product: { isActive: true } }, include: { product: true }, orderBy: { product: { name: 'asc' } } }), this.prisma.crop.count({ where: { isActive: true } })]);
