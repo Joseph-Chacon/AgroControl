@@ -8,6 +8,176 @@
 
 body { margin: 0; }
 
+/* Una vista de módulo reemplaza temporalmente el panel principal. */
+body.module-open .dashboard > header,
+body.module-open .dashboard > .lead,
+body.module-open .dashboard > .cards,
+body.module-open .dashboard > ac-dashboard-indicators { display: none; }
+
+.module-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  color: #153b24;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.module-nav button {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid #bed1c1;
+  border-radius: 9px;
+  background: #eaf6ed;
+  color: #1f6339;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.module-nav button:hover { background: #d8efdd; }
+
+.brand-logo { width: 300px; height: 200px; margin-right: 18px; object-fit: contain; background: transparent; box-shadow: none; }
+
+/* Sistema visual único para todos los módulos. */
+button { border: 0; font: inherit; cursor: pointer; }
+
+.workspace,
+.indicators {
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid #e0ece2;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(18 63 34 / 10%);
+}
+
+.workspace h2,
+.workspace h3,
+.indicators h2 { color: #153b24; }
+
+.workspace form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: center;
+  margin: 14px 0;
+}
+
+.workspace input,
+.workspace select,
+.workspace textarea,
+.hero input,
+.hero select {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 10px 12px !important;
+  border: 1px solid #bed1c1 !important;
+  border-radius: 9px !important;
+  background: #fff;
+  color: #1b3323;
+  font: inherit;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.workspace input:focus,
+.workspace select:focus,
+.workspace textarea:focus,
+.hero input:focus,
+.hero select:focus {
+  border-color: #287847 !important;
+  box-shadow: 0 0 0 3px rgb(40 120 71 / 14%);
+}
+
+.workspace button,
+.detail button,
+.hero .submit,
+.indicators button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: #1f6d3c !important;
+  color: #fff !important;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1;
+  transition: background .15s ease, transform .15s ease, opacity .15s ease;
+}
+
+.workspace button:hover,
+.detail button:hover,
+.hero .submit:hover,
+.indicators button:hover { background: #175a30 !important; transform: translateY(-1px); }
+.workspace button:disabled,
+.detail button:disabled,
+.hero .submit:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+
+.workspace table {
+  width: 100% !important;
+  margin: 18px 0 !important;
+  border: 1px solid #e0ece2 !important;
+  border-collapse: separate !important;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.workspace th,
+.workspace td {
+  padding: 12px !important;
+  border-bottom: 1px solid #e3ece4 !important;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.workspace th {
+  background: #eef7ef !important;
+  color: #39704a !important;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.workspace tbody tr:last-child td { border-bottom: 0 !important; }
+.workspace tbody tr:hover { background: #f7fbf7; }
+
+/* Acciones consecutivas de una fila: consultar, anular, editar, etc. */
+.workspace td button + button { margin-left: 8px !important; }
+
+/* El último botón de las acciones documentales es la anulación. */
+ac-applications-panel .workspace td button:last-child:not(:only-child),
+ac-transport-panel .workspace td button:last-child:not(:only-child),
+ac-purchases-panel .workspace td button:last-child:not(:only-child),
+ac-harvests-panel .workspace td button:last-child:not(:only-child),
+ac-expenses-panel .workspace td button:last-child:not(:only-child),
+ac-sales-panel .workspace td button:last-child:not(:only-child) {
+  background: #b74435 !important;
+}
+
+ac-applications-panel .workspace td button:last-child:not(:only-child):hover,
+ac-transport-panel .workspace td button:last-child:not(:only-child):hover,
+ac-purchases-panel .workspace td button:last-child:not(:only-child):hover,
+ac-harvests-panel .workspace td button:last-child:not(:only-child):hover,
+ac-expenses-panel .workspace td button:last-child:not(:only-child):hover,
+ac-sales-panel .workspace td button:last-child:not(:only-child):hover {
+  background: #8f3025 !important;
+}
+
+@media (max-width: 700px) {
+  .workspace,
+  .indicators { padding: 18px; }
+  .workspace form { grid-template-columns: 1fr !important; }
+  .workspace table { display: block; overflow-x: auto; white-space: nowrap; }
+}
+
 .detail {
   position: fixed !important;
   z-index: 1000;

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-type Crop = { id: string; name: string; lot: { name: string; farm: { name: string } } };
+type Crop = { id: string; name: string; plantedAt: string; plantedPlants: number; isActive: boolean; lot: { name: string; farm: { name: string } } };
 type HarvestLine = { grade: string; label: string; boxes: number | null; unitPrice: number | null };
 type Harvest = { id: string; harvestedAt: string; quantity: string; crop: Crop; items: { grade: string; boxes: number; unitPrice: string | null; total: string | null }[] };
 type PriceLine = { grade: string; label: string; boxes: number; unitPrice: number | null };
@@ -22,7 +22,7 @@ const gradeLines = (): HarvestLine[] => [
       <form class="harvest-form" (ngSubmit)="save()">
         <select name="crop" [(ngModel)]="cropId" required>
           <option value="" disabled>Seleccione finca · lote · cultivo</option>
-          @for (crop of crops; track crop.id) { <option [value]="crop.id">{{ crop.lot.farm.name }} · {{ crop.lot.name }} · {{ crop.name }}</option> }
+          @for (crop of crops; track crop.id) { <option [value]="crop.id">{{ crop.lot.farm.name }} · {{ crop.lot.name }} · {{ crop.name }} · Siembra: {{ crop.plantedAt | slice:0:10 }} · {{ crop.plantedPlants }} matas</option> }
         </select>
         <input name="harvestedAt" [(ngModel)]="harvestedAt" type="date" required>
 
@@ -98,7 +98,7 @@ export class HarvestsPanelComponent {
 
   constructor(private readonly http: HttpClient, private readonly cdr: ChangeDetectorRef) {
     this.http.get<{ name: string; lots: { name: string; crops: Crop[] }[] }[]>('http://localhost:3000/api/v1/agriculture/farms').subscribe(farms => {
-      this.crops = farms.flatMap(farm => farm.lots.flatMap(lot => lot.crops.map(crop => ({ ...crop, lot: { name: lot.name, farm: { name: farm.name } } }))));
+      this.crops = farms.flatMap((farm) => farm.lots.flatMap((lot) => lot.crops.filter((crop) => crop.isActive).map((crop) => ({ ...crop, lot: { name: lot.name, farm: { name: farm.name } } }))));
       this.cdr.detectChanges();
     });
     this.load();

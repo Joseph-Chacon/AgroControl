@@ -6,7 +6,7 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 @Injectable()
 export class ApplicationsService {
   constructor(private readonly prisma: PrismaService, private readonly sequence: SequenceService) {}
-  findAll() { return this.prisma.application.findMany({ where: { isVoided: false }, include: { lot: true, crop: true, items: { include: { product: true } } }, orderBy: { appliedAt: 'desc' } }); }
+  findAll() { return this.prisma.application.findMany({ where: { isVoided: false }, include: { lot: { include: { farm: true } }, crop: true, items: { include: { product: true } } }, orderBy: { appliedAt: 'desc' } }); }
   async create(dto: CreateApplicationDto) {
     if (new Set(dto.items.map((item) => item.productId)).size !== dto.items.length) throw new BadRequestException('Un producto solo puede aparecer una vez.');
     const code = await this.sequence.next('APPLICATION', 'APL');

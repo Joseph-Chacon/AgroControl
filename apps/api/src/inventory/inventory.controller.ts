@@ -1,13 +1,13 @@
 import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
 import { MovementType, Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
 class MovementQueryDto { @IsOptional() @IsUUID() productId?: string; }
-class AdjustmentDto { @IsUUID() productId!: string; @IsEnum(MovementType) type!: 'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT'; @Type(() => Number) @Min(0.0001) quantity!: number; @IsString() @MinLength(3) reason!: string; }
+class AdjustmentDto { @IsUUID() productId!: string; @IsEnum(MovementType) type!: 'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT'; @Type(() => Number) @Min(0.0001) quantity!: number; @IsString() @MinLength(3) reason!: string; @IsOptional() @IsBoolean() isInitial?: boolean; @IsOptional() @Type(() => Number) @Min(0.000001) unitCost?: number; }
 
 @ApiTags('Inventario')
 @Controller('inventory')
@@ -31,13 +31,17 @@ export class InventoryController {
     return this.prisma.$transaction(async tx => {
       const inventory = await tx.inventoryItem.findUnique({ where: { productId: dto.productId } });
       if (!inventory) throw new BadRequestException('El producto seleccionado no existe o no tiene inventario inicializado.');
+      if (dto.isInitial && dto.type !== MovementType.ADJUSTMENT_IN) throw new BadRequestException('El inventario inicial solo puede registrarse como entrada.');
+      if (dto.isInitial && inventory.quantity.greaterThan(0)) throw new BadRequestException('Este producto ya tiene existencia. Use un ajuste normal para corregirlo.');
+      if (dto.isInitial && dto.unitCost === undefined) throw new BadRequestException('Indique el costo unitario para el inventario inicial.');
       const quantity = new Prisma.Decimal(dto.quantity);
       const after = dto.type === MovementType.ADJUSTMENT_IN ? inventory.quantity.plus(quantity) : inventory.quantity.minus(quantity);
       if (after.isNegative()) throw new BadRequestException('El ajuste no puede dejar inventario negativo.');
       const referenceId = randomUUID();
-      await tx.inventoryItem.update({ where: { productId: dto.productId }, data: { quantity: after } });
-      const movement = await tx.inventoryMovement.create({ data: { productId: dto.productId, type: dto.type, quantity, quantityBefore: inventory.quantity, quantityAfter: after, unitCost: inventory.averageCost, referenceType: 'INVENTORY_ADJUSTMENT', referenceId, notes: dto.reason.trim() } });
-      await tx.auditLog.create({ data: { entityType: 'INVENTORY_ADJUSTMENT', entityId: referenceId, action: dto.type, reason: dto.reason.trim(), actorId } });
+      const unitCost = dto.isInitial ? new Prisma.Decimal(dto.unitCost!) : inventory.averageCost;
+      await tx.inventoryItem.update({ where: { productId: dto.productId }, data: { quantity: after, ...(dto.isInitial ? { averageCost: unitCost, lastCost: unitCost } : {}) } });
+      const movement = await tx.inventoryMovement.create({ data: { productId: dto.productId, type: dto.type, quantity, quantityBefore: inventory.quantity, quantityAfter: after, unitCost, referenceType: dto.isInitial ? 'INITIAL_INVENTORY' : 'INVENTORY_ADJUSTMENT', referenceId, notes: dto.reason.trim() } });
+      await tx.auditLog.create({ data: { entityType: dto.isInitial ? 'INITIAL_INVENTORY' : 'INVENTORY_ADJUSTMENT', entityId: referenceId, action: dto.type, reason: dto.reason.trim(), actorId } });
       return movement;
     });
   }
