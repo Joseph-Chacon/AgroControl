@@ -129,23 +129,8 @@ model Product {
   movements   InventoryMovement[]
   purchaseItems PurchaseItem[]
   applicationItems ApplicationItem[]
-  presentations ProductPresentation[]
 
   @@map("products")
-}
-
-model ProductPresentation {
-  id              String   @id @default(uuid()) @db.Uuid
-  productId       String   @db.Uuid
-  name            String
-  contentQuantity Decimal  @db.Decimal(18, 4)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  purchaseItems   PurchaseItem[]
-
-  @@unique([productId, name])
-  @@map("product_presentations")
 }
 
 model Farm {
@@ -312,17 +297,13 @@ model PurchaseItem {
   id          String   @id @default(uuid()) @db.Uuid
   purchaseId  String   @db.Uuid
   productId   String   @db.Uuid
-  presentationId String? @db.Uuid
-  packageQuantity Decimal? @db.Decimal(18, 4)
   quantity    Decimal  @db.Decimal(18, 4)
   totalCost   Decimal  @db.Decimal(18, 2)
   unitCost    Decimal  @db.Decimal(18, 6)
   purchase    Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
-  presentation ProductPresentation? @relation(fields: [presentationId], references: [id], onDelete: Restrict)
 
   @@index([productId])
-  @@index([presentationId])
   @@map("purchase_items")
 }
 

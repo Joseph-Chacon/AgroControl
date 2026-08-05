@@ -1,9 +1,9 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsDateString, IsOptional, IsUUID, Min, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsDateString, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
 
 class PurchaseItemDto {
-  @IsUUID() presentationId!: string;
-  @Type(() => Number) @Min(0.0001) packageQuantity!: number;
+  @IsUUID() productId!: string;
+  @Type(() => Number) @Min(0.0001) quantity!: number;
   @Type(() => Number) @Min(0.01) totalCost!: number;
 }
 export class CreatePurchaseDto {
