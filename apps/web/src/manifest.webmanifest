@@ -1,0 +1,9 @@
+{
+  "name": "AgroControl",
+  "short_name": "AgroControl",
+  "theme_color": "#1f6d3c",
+  "background_color": "#f4f8f3",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/"
+}

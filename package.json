@@ -1,0 +1,14 @@
+{
+  "name": "agrocontrol",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @agrocontrol/api start:dev",
+    "dev:web": "pnpm --filter @agrocontrol/web start",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @agrocontrol/api prisma:generate",
+    "db:migrate": "pnpm --filter @agrocontrol/api prisma:migrate"
+  }
+}
