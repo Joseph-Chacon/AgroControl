@@ -61,7 +61,6 @@ export class InventoryController {
       if (!output?.isActive || !output.inventory) throw new BadRequestException('El producto obtenido no existe o está inactivo.');
       const inputs = await Promise.all(dto.items.map(async item => ({ item, product: await tx.product.findUnique({ where: { id: item.productId }, include: { inventory: true } }) })));
       if (inputs.some(({ product }) => !product?.isActive || !product.inventory)) throw new BadRequestException('Uno de los productos origen no existe o está inactivo.');
-      if (inputs.some(({ product }) => product!.baseUnit !== output.baseUnit)) throw new BadRequestException(`Todos los productos deben usar la unidad ${output.baseUnit}.`);
       const inputCosts = inputs.map(({ item, product }) => {
         const quantity = new Prisma.Decimal(item.quantity);
         const inventory = product!.inventory!;
