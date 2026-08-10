@@ -9,6 +9,9 @@ class PurchaseItemDto {
 export class CreatePurchaseDto {
   @IsUUID() supplierId!: string;
   @IsOptional() @IsDateString() receivedAt?: string;
-  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) @Type(() => PurchaseItemDto)
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => PurchaseItemDto)
   items!: PurchaseItemDto[];
 }

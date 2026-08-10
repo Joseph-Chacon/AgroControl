@@ -119,153 +119,173 @@ model Unit {
 }
 
 model Product {
-  id          String             @id @default(uuid()) @db.Uuid
-  code        String             @unique
-  name        String
-  baseUnit    BaseUnit
-  minStock    Decimal            @default(0) @db.Decimal(18, 4)
-  isActive    Boolean            @default(true)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  inventory   InventoryItem?
-  movements   InventoryMovement[]
-  purchaseItems PurchaseItem[]
-  applicationItems ApplicationItem[]
-  transformationOutputs InventoryTransformation[] @relation("TransformationOutput")
-  transformationItems InventoryTransformationItem[]
+  id                    String                        @id @default(uuid()) @db.Uuid
+  code                  String                        @unique
+  name                  String
+  baseUnit              BaseUnit
+  minStock              Decimal                       @default(0) @db.Decimal(18, 4)
+  isActive              Boolean                       @default(true)
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  inventory             InventoryItem?
+  movements             InventoryMovement[]
+  purchaseItems         PurchaseItem[]
+  applicationItems      ApplicationItem[]
+  transformationOutputs InventoryTransformation[]     @relation("TransformationOutput")
+  transformationItems   InventoryTransformationItem[]
 
   @@map("products")
 }
 
 model Farm {
-  id String @id @default(uuid()) @db.Uuid
-  name String @unique
+  id       String  @id @default(uuid()) @db.Uuid
+  name     String  @unique
   isActive Boolean @default(true)
-  lots Lot[]
+  lots     Lot[]
+
   @@map("farms")
 }
+
 model Lot {
-  id String @id @default(uuid()) @db.Uuid
-  code String @unique
-  name String
-  isActive Boolean @default(true)
-  farmId String @db.Uuid
-  farm Farm @relation(fields: [farmId], references: [id], onDelete: Restrict)
-  crops Crop[]
+  id           String        @id @default(uuid()) @db.Uuid
+  code         String        @unique
+  name         String
+  isActive     Boolean       @default(true)
+  farmId       String        @db.Uuid
+  farm         Farm          @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  crops        Crop[]
   applications Application[]
+
   @@map("lots")
 }
 
 model Harvest {
-  id String @id @default(uuid()) @db.Uuid
-  cropId String @db.Uuid
-  harvestedAt DateTime @default(now())
-  quantity Decimal @db.Decimal(18, 4)
-  unit String @default("KG")
-  isVoided Boolean @default(false)
-  voidedAt DateTime?
-  voidReason String?
-  crop Crop @relation(fields: [cropId], references: [id], onDelete: Restrict)
-  items HarvestItem[]
+  id          String        @id @default(uuid()) @db.Uuid
+  cropId      String        @db.Uuid
+  harvestedAt DateTime      @default(now())
+  quantity    Decimal       @db.Decimal(18, 4)
+  unit        String        @default("KG")
+  isVoided    Boolean       @default(false)
+  voidedAt    DateTime?
+  voidReason  String?
+  crop        Crop          @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  items       HarvestItem[]
+
   @@map("harvests")
 }
+
 model HarvestItem {
-  id String @id @default(uuid()) @db.Uuid
-  harvestId String @db.Uuid
-  grade HarvestGrade
-  boxes Int
-  unitPrice Decimal? @db.Decimal(18, 2)
-  total Decimal? @db.Decimal(18, 2)
-  harvest Harvest @relation(fields: [harvestId], references: [id], onDelete: Cascade)
+  id        String       @id @default(uuid()) @db.Uuid
+  harvestId String       @db.Uuid
+  grade     HarvestGrade
+  boxes     Int
+  unitPrice Decimal?     @db.Decimal(18, 2)
+  total     Decimal?     @db.Decimal(18, 2)
+  harvest   Harvest      @relation(fields: [harvestId], references: [id], onDelete: Cascade)
+
   @@unique([harvestId, grade])
   @@map("harvest_items")
 }
+
 model Customer {
-  id String @id @default(uuid()) @db.Uuid
-  name String @unique
+  id       String  @id @default(uuid()) @db.Uuid
+  name     String  @unique
   isActive Boolean @default(true)
-  sales Sale[]
+  sales    Sale[]
+
   @@map("customers")
 }
+
 model TransportTrip {
-  id String @id @default(uuid()) @db.Uuid
-  cropId String @db.Uuid
-  tripDate DateTime @default(now())
-  amount Decimal @db.Decimal(18, 2)
-  notes String?
-  isVoided Boolean @default(false)
-  voidedAt DateTime?
+  id         String    @id @default(uuid()) @db.Uuid
+  cropId     String    @db.Uuid
+  tripDate   DateTime  @default(now())
+  amount     Decimal   @db.Decimal(18, 2)
+  notes      String?
+  isVoided   Boolean   @default(false)
+  voidedAt   DateTime?
   voidReason String?
-  crop Crop @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  crop       Crop      @relation(fields: [cropId], references: [id], onDelete: Restrict)
+
   @@map("transport_trips")
 }
+
 model Sale {
-  id String @id @default(uuid()) @db.Uuid
-  code String @unique
-  cropId String? @db.Uuid
-  customerId String? @db.Uuid
-  soldAt DateTime @default(now())
-  total Decimal @db.Decimal(18, 2)
-  isVoided Boolean @default(false)
-  voidedAt DateTime?
+  id         String    @id @default(uuid()) @db.Uuid
+  code       String    @unique
+  cropId     String?   @db.Uuid
+  customerId String?   @db.Uuid
+  soldAt     DateTime  @default(now())
+  total      Decimal   @db.Decimal(18, 2)
+  isVoided   Boolean   @default(false)
+  voidedAt   DateTime?
   voidReason String?
-  crop Crop? @relation(fields: [cropId], references: [id], onDelete: Restrict)
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  crop       Crop?     @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
   @@map("sales")
 }
+
 model Expense {
-  id String @id @default(uuid()) @db.Uuid
-  cropId String? @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  cropId      String?   @db.Uuid
   description String
-  occurredAt DateTime @default(now())
-  amount Decimal @db.Decimal(18, 2)
-  isVoided Boolean @default(false)
-  voidedAt DateTime?
-  voidReason String?
-  crop Crop? @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  occurredAt  DateTime  @default(now())
+  amount      Decimal   @db.Decimal(18, 2)
+  isVoided    Boolean   @default(false)
+  voidedAt    DateTime?
+  voidReason  String?
+  crop        Crop?     @relation(fields: [cropId], references: [id], onDelete: Restrict)
+
   @@map("expenses")
 }
+
 model Crop {
-  id String @id @default(uuid()) @db.Uuid
-  name String
-  lotId String @db.Uuid
-  isActive Boolean @default(true)
-  plantedAt DateTime @default(now())
-  plantedPlants Int @default(0)
-  removedAt DateTime?
-  lot Lot @relation(fields: [lotId], references: [id], onDelete: Restrict)
-  applications Application[]
-  harvests Harvest[]
-  expenses Expense[]
-  sales Sale[]
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  lotId          String          @db.Uuid
+  isActive       Boolean         @default(true)
+  plantedAt      DateTime        @default(now())
+  plantedPlants  Int             @default(0)
+  removedAt      DateTime?
+  lot            Lot             @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  applications   Application[]
+  harvests       Harvest[]
+  expenses       Expense[]
+  sales          Sale[]
   transportTrips TransportTrip[]
+
   @@map("crops")
 }
+
 model Application {
-  id String @id @default(uuid()) @db.Uuid
-  code String @unique
-  lotId String @db.Uuid
-  cropId String? @db.Uuid
-  appliedAt DateTime @default(now())
-  notes String?
-  totalCost Decimal @db.Decimal(18, 2)
-  isVoided Boolean @default(false)
-  voidedAt DateTime?
+  id         String            @id @default(uuid()) @db.Uuid
+  code       String            @unique
+  lotId      String            @db.Uuid
+  cropId     String?           @db.Uuid
+  appliedAt  DateTime          @default(now())
+  notes      String?
+  totalCost  Decimal           @db.Decimal(18, 2)
+  isVoided   Boolean           @default(false)
+  voidedAt   DateTime?
   voidReason String?
-  lot Lot @relation(fields: [lotId], references: [id], onDelete: Restrict)
-  crop Crop? @relation(fields: [cropId], references: [id], onDelete: Restrict)
-  items ApplicationItem[]
+  lot        Lot               @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  crop       Crop?             @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  items      ApplicationItem[]
+
   @@map("applications")
 }
+
 model ApplicationItem {
-  id String @id @default(uuid()) @db.Uuid
-  applicationId String @db.Uuid
-  productId String @db.Uuid
-  quantity Decimal @db.Decimal(18, 4)
-  averageCost Decimal @db.Decimal(18, 6)
-  totalCost Decimal @db.Decimal(18, 2)
-  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  id            String      @id @default(uuid()) @db.Uuid
+  applicationId String      @db.Uuid
+  productId     String      @db.Uuid
+  quantity      Decimal     @db.Decimal(18, 4)
+  averageCost   Decimal     @db.Decimal(18, 6)
+  totalCost     Decimal     @db.Decimal(18, 2)
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+
   @@map("application_items")
 }
 
@@ -294,18 +314,19 @@ model Supplier {
   isActive  Boolean    @default(true)
   createdAt DateTime   @default(now())
   purchases Purchase[]
+
   @@map("suppliers")
 }
 
 model PurchaseItem {
-  id          String   @id @default(uuid()) @db.Uuid
-  purchaseId  String   @db.Uuid
-  productId   String   @db.Uuid
-  quantity    Decimal  @db.Decimal(18, 4)
-  totalCost   Decimal  @db.Decimal(18, 2)
-  unitCost    Decimal  @db.Decimal(18, 6)
-  purchase    Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  id         String   @id @default(uuid()) @db.Uuid
+  purchaseId String   @db.Uuid
+  productId  String   @db.Uuid
+  quantity   Decimal  @db.Decimal(18, 4)
+  totalCost  Decimal  @db.Decimal(18, 2)
+  unitCost   Decimal  @db.Decimal(18, 6)
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([productId])
   @@map("purchase_items")
@@ -343,17 +364,17 @@ model InventoryMovement {
 }
 
 model InventoryTransformation {
-  id              String   @id @default(uuid()) @db.Uuid
-  code            String   @unique
-  outputProductId String   @db.Uuid
-  outputQuantity  Decimal  @db.Decimal(18, 4)
-  totalCost       Decimal  @db.Decimal(18, 2)
+  id              String                        @id @default(uuid()) @db.Uuid
+  code            String                        @unique
+  outputProductId String                        @db.Uuid
+  outputQuantity  Decimal                       @db.Decimal(18, 4)
+  totalCost       Decimal                       @db.Decimal(18, 2)
   notes           String?
-  createdAt       DateTime @default(now())
-  isVoided        Boolean  @default(false)
+  createdAt       DateTime                      @default(now())
+  isVoided        Boolean                       @default(false)
   voidedAt        DateTime?
   voidReason      String?
-  outputProduct   Product  @relation("TransformationOutput", fields: [outputProductId], references: [id], onDelete: Restrict)
+  outputProduct   Product                       @relation("TransformationOutput", fields: [outputProductId], references: [id], onDelete: Restrict)
   items           InventoryTransformationItem[]
 
   @@map("inventory_transformations")

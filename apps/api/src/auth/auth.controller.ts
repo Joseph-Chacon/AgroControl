@@ -7,8 +7,15 @@ import { BootstrapAdminDto } from './dto/bootstrap-admin.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
-  @Post('bootstrap-admin') @ApiOperation({ summary: 'Crear el primer administrador; se bloquea tras usarlo.' })
-  bootstrapAdmin(@Body() dto: BootstrapAdminDto) { return this.auth.bootstrapAdmin(dto); }
-  @Post('login') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Iniciar sesión' })
-  login(@Body() dto: LoginDto) { return this.auth.login(dto); }
+  @Post('bootstrap-admin')
+  @ApiOperation({ summary: 'Crear el primer administrador; se bloquea tras usarlo.' })
+  bootstrapAdmin(@Body() dto: BootstrapAdminDto) {
+    return this.auth.bootstrapAdmin(dto);
+  }
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Iniciar sesión' })
+  login(@Body() dto: LoginDto) {
+    return this.auth.login(dto);
+  }
 }

@@ -20,44 +20,400 @@ import { DashboardIndicatorsComponent } from './dashboard-indicators.component';
   imports: [FormsModule],
   template: `
     <main>
-      @if (!loggedIn) { <section class="hero">
-        <p class="eyebrow">Sistema agrícola</p>
-        <h1>AgroControl</h1>
-        <p class="lead">Controle de manera ordenada su inventario, aplicaciones y costos de su cultivo.</p>
-        <div class="tabs"><button [class.active]="mode === 'setup'" (click)="mode = 'setup'">Configuración inicial</button><button [class.active]="mode === 'login'" (click)="mode = 'login'">Ingresar</button></div>
-        @if (mode === 'setup') {
-          <form (ngSubmit)="bootstrap()">
-            <input name="firstName" [(ngModel)]="setup.firstName" placeholder="Nombre" required>
-            <input name="lastName" [(ngModel)]="setup.lastName" placeholder="Apellido" required>
-            <input name="email" [(ngModel)]="setup.email" type="email" placeholder="Correo electrónico" required>
-            <input name="password" [(ngModel)]="setup.password" type="password" placeholder="Contraseña (mínimo 12 caracteres)" minlength="12" required>
-            <input name="setupToken" [(ngModel)]="setup.setupToken" type="password" placeholder="Token de configuración" minlength="24" required>
-            <button class="submit" [disabled]="loading">Crear administrador</button>
-          </form>
-        } @else {
-          <form (ngSubmit)="login()">
-            <input name="email" [(ngModel)]="loginData.email" type="email" placeholder="Correo electrónico" required>
-            <input name="password" [(ngModel)]="loginData.password" type="password" placeholder="Contraseña" required>
-            <button class="submit" [disabled]="loading">Ingresar</button>
-          </form>
-        }
-        @if (loading) { <p class="status">Validando credenciales...</p> } @else if (message) { <p class="status" [class.error]="isError">{{ message }}</p> }
-      </section> } @else { <section class="dashboard"><header><div><p class="eyebrow">Agro Control</p><h1>Panel principal</h1></div><button class="logout" (click)="logout()">Cerrar sesión</button></header><p class="lead">Bienvenido, {{ userName }}. Selecciona un módulo para comenzar.</p><div class="cards">@for (item of modules; track item.name) { <button class="card" (click)="selectModule(item.name)"><span>{{ item.icon }}</span><strong>{{ item.name }}</strong><small>{{ item.description }}</small></button> }</div>@if (selectedModule === 'Proveedores') { <section class="workspace"><h2>Proveedores</h2><form (ngSubmit)="createSupplier()"><input name="supplierNewName" [(ngModel)]="newSupplier.name" placeholder="Nombre del proveedor" required><input name="supplierPhone" [(ngModel)]="newSupplier.phone" placeholder="Teléfono"><input name="supplierEmail" [(ngModel)]="newSupplier.email" type="email" placeholder="Correo"><button class="submit" [disabled]="loading">Guardar proveedor</button></form>@if (suppliers.length) { <table><thead><tr><th>Proveedor</th><th>Teléfono</th><th>Correo</th></tr></thead><tbody>@for (supplier of suppliers; track supplier.id) { <tr><td>{{ supplier.name }}</td><td>{{ supplier.phone || '—' }}</td><td>{{ supplier.email || '—' }}</td></tr> }</tbody></table> } @else { <p class="status">Aún no hay proveedores registrados.</p> }</section> } @else if (selectedModule === 'Inventario' || selectedModule === 'Compras') { <section class="workspace"><h2>{{ selectedModule === 'Compras' ? 'Registrar compra' : 'Productos e inventario' }}</h2>@if (selectedModule === 'Inventario') { <form (ngSubmit)="createProduct()"><input name="productName" [(ngModel)]="productName" placeholder="Nombre del producto" required><select name="baseUnit" [(ngModel)]="baseUnit"><option value="ML">Líquido (mL)</option><option value="G">Sólido (g)</option><option value="UND">Unidad</option></select><button class="submit" [disabled]="loading">Crear producto</button></form> } @else { <form (ngSubmit)="createPurchase()"><select name="purchaseSupplier" [(ngModel)]="purchaseSupplierId" required><option value="" disabled>Seleccione un proveedor</option>@for (supplier of suppliers; track supplier.id) { <option [value]="supplier.id">{{ supplier.name }}</option> }</select><select name="purchaseProduct" [(ngModel)]="purchaseProductId" required><option value="" disabled>Seleccione un producto</option>@for (item of inventory; track item.id) { <option [value]="item.productId">{{ item.product.name }} ({{ item.product.baseUnit }})</option> }</select><input name="quantity" [(ngModel)]="purchaseQuantity" type="number" min="0.0001" placeholder="Cantidad en unidad base" required><input name="cost" [(ngModel)]="purchaseCost" type="number" min="0.01" placeholder="Costo total (₡)" required><button class="submit" [disabled]="loading || !suppliers.length">Guardar compra</button></form> }<button class="refresh" (click)="loadInventory()">Actualizar inventario</button>@if (inventory.length) { <table><thead><tr><th>Código</th><th>Producto</th><th>Unidad</th><th>Existencia</th><th>Costo promedio</th></tr></thead><tbody>@for (item of inventory; track item.id) { <tr><td>{{ item.product.code }}</td><td>{{ item.product.name }}</td><td>{{ item.product.baseUnit }}</td><td>{{ item.quantity }}</td><td>₡{{ item.averageCost }}</td></tr> }</tbody></table> } @else { <p class="status">Aún no hay productos registrados.</p> }</section> } @else if (selectedModule) { <p class="status">El módulo <strong>{{ selectedModule }}</strong> será el siguiente en implementarse.</p> }</section> }
+      @if (!loggedIn) {
+        <section class="hero">
+          <p class="eyebrow">Sistema agrícola</p>
+          <h1>AgroControl</h1>
+          <p class="lead">Controle de manera ordenada su inventario, aplicaciones y costos de su cultivo.</p>
+          <div class="tabs">
+            <button [class.active]="mode === 'setup'" (click)="mode = 'setup'">Configuración inicial</button
+            ><button [class.active]="mode === 'login'" (click)="mode = 'login'">Ingresar</button>
+          </div>
+          @if (mode === 'setup') {
+            <form (ngSubmit)="bootstrap()">
+              <input name="firstName" [(ngModel)]="setup.firstName" placeholder="Nombre" required />
+              <input name="lastName" [(ngModel)]="setup.lastName" placeholder="Apellido" required />
+              <input name="email" [(ngModel)]="setup.email" type="email" placeholder="Correo electrónico" required />
+              <input
+                name="password"
+                [(ngModel)]="setup.password"
+                type="password"
+                placeholder="Contraseña (mínimo 12 caracteres)"
+                minlength="12"
+                required
+              />
+              <input
+                name="setupToken"
+                [(ngModel)]="setup.setupToken"
+                type="password"
+                placeholder="Token de configuración"
+                minlength="24"
+                required
+              />
+              <button class="submit" [disabled]="loading">Crear administrador</button>
+            </form>
+          } @else {
+            <form (ngSubmit)="login()">
+              <input name="email" [(ngModel)]="loginData.email" type="email" placeholder="Correo electrónico" required />
+              <input name="password" [(ngModel)]="loginData.password" type="password" placeholder="Contraseña" required />
+              <button class="submit" [disabled]="loading">Ingresar</button>
+            </form>
+          }
+          @if (loading) {
+            <p class="status">Validando credenciales...</p>
+          } @else if (message) {
+            <p class="status" [class.error]="isError">{{ message }}</p>
+          }
+        </section>
+      } @else {
+        <section class="dashboard">
+          <header>
+            <div>
+              <p class="eyebrow">Agro Control</p>
+              <h1>Panel principal</h1>
+            </div>
+            <button class="logout" (click)="logout()">Cerrar sesión</button>
+          </header>
+          <p class="lead">Bienvenido, {{ userName }}. Selecciona un módulo para comenzar.</p>
+          <div class="cards">
+            @for (item of modules; track item.name) {
+              <button class="card" (click)="selectModule(item.name)">
+                <span>{{ item.icon }}</span
+                ><strong>{{ item.name }}</strong
+                ><small>{{ item.description }}</small>
+              </button>
+            }
+          </div>
+          @if (selectedModule === 'Proveedores') {
+            <section class="workspace">
+              <h2>Proveedores</h2>
+              <form (ngSubmit)="createSupplier()">
+                <input name="supplierNewName" [(ngModel)]="newSupplier.name" placeholder="Nombre del proveedor" required /><input
+                  name="supplierPhone"
+                  [(ngModel)]="newSupplier.phone"
+                  placeholder="Teléfono"
+                /><input name="supplierEmail" [(ngModel)]="newSupplier.email" type="email" placeholder="Correo" /><button
+                  class="submit"
+                  [disabled]="loading"
+                >
+                  Guardar proveedor
+                </button>
+              </form>
+              @if (suppliers.length) {
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Proveedor</th>
+                      <th>Teléfono</th>
+                      <th>Correo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (supplier of suppliers; track supplier.id) {
+                      <tr>
+                        <td>{{ supplier.name }}</td>
+                        <td>{{ supplier.phone || '—' }}</td>
+                        <td>{{ supplier.email || '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                <p class="status">Aún no hay proveedores registrados.</p>
+              }
+            </section>
+          } @else if (selectedModule === 'Inventario' || selectedModule === 'Compras') {
+            <section class="workspace">
+              <h2>{{ selectedModule === 'Compras' ? 'Registrar compra' : 'Productos e inventario' }}</h2>
+              @if (selectedModule === 'Inventario') {
+                <form (ngSubmit)="createProduct()">
+                  <input name="productName" [(ngModel)]="productName" placeholder="Nombre del producto" required /><select
+                    name="baseUnit"
+                    [(ngModel)]="baseUnit"
+                  >
+                    <option value="ML">Líquido (mL)</option>
+                    <option value="G">Sólido (g)</option>
+                    <option value="UND">Unidad</option></select
+                  ><button class="submit" [disabled]="loading">Crear producto</button>
+                </form>
+              } @else {
+                <form (ngSubmit)="createPurchase()">
+                  <select name="purchaseSupplier" [(ngModel)]="purchaseSupplierId" required>
+                    <option value="" disabled>Seleccione un proveedor</option>
+                    @for (supplier of suppliers; track supplier.id) {
+                      <option [value]="supplier.id">{{ supplier.name }}</option>
+                    }</select
+                  ><select name="purchaseProduct" [(ngModel)]="purchaseProductId" required>
+                    <option value="" disabled>Seleccione un producto</option>
+                    @for (item of inventory; track item.id) {
+                      <option [value]="item.productId">{{ item.product.name }} ({{ item.product.baseUnit }})</option>
+                    }</select
+                  ><input
+                    name="quantity"
+                    [(ngModel)]="purchaseQuantity"
+                    type="number"
+                    min="0.0001"
+                    placeholder="Cantidad en unidad base"
+                    required
+                  /><input name="cost" [(ngModel)]="purchaseCost" type="number" min="0.01" placeholder="Costo total (₡)" required /><button
+                    class="submit"
+                    [disabled]="loading || !suppliers.length"
+                  >
+                    Guardar compra
+                  </button>
+                </form>
+              }
+              <button class="refresh" (click)="loadInventory()">Actualizar inventario</button>
+              @if (inventory.length) {
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Producto</th>
+                      <th>Unidad</th>
+                      <th>Existencia</th>
+                      <th>Costo promedio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of inventory; track item.id) {
+                      <tr>
+                        <td>{{ item.product.code }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.product.baseUnit }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₡{{ item.averageCost }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                <p class="status">Aún no hay productos registrados.</p>
+              }
+            </section>
+          } @else if (selectedModule) {
+            <p class="status">
+              El módulo <strong>{{ selectedModule }}</strong> será el siguiente en implementarse.
+            </p>
+          }
+        </section>
+      }
     </main>
   `,
   styles: `
-    :host { display: block; min-height: 100dvh; }
-    main { display: grid; min-height: 100dvh; place-items: center; padding: 24px; }
-    .hero { width: min(100%, 560px); padding: clamp(28px, 8vw, 56px); border-radius: 24px; background: #ffffff; box-shadow: 0 18px 50px rgb(18 63 34 / 14%); }
-    .eyebrow { margin: 0; color: #277848; font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    h1 { margin: 8px 0 12px; color: #153b24; font-size: clamp(2.4rem, 10vw, 4rem); line-height: 1; }
-    .lead { margin: 0; color: #34513e; font-size: 1.1rem; line-height: 1.55; }
-    .tabs { display: flex; gap: 8px; margin: 28px 0 16px; } button { border: 0; cursor: pointer; font: inherit; } .tabs button { padding: 9px 10px; border-radius: 8px; background: transparent; color: #52725c; } .tabs .active { background: #eaf6ed; color: #1f6339; font-weight: 700; } form { display: grid; gap: 12px; } input,select { width: 100%; min-height: 48px; padding: 12px; border: 1px solid #bed1c1; border-radius: 10px; font: inherit; } .submit { min-height: 48px; border-radius: 10px; background: #1f6d3c; color: white; font-weight: 700; } .submit:disabled { opacity: .6; } .status { margin: 20px 0 0; padding: 14px 16px; border-radius: 12px; background: #eaf6ed; color: #1f6339; line-height: 1.45; } .error { background: #fff0ef; color: #9c2c22; } .dashboard { width: min(1100px, 100%); } header { display:flex; justify-content:space-between; align-items:center; gap:16px; } .logout,.refresh { padding:10px 14px; border-radius:9px; background:#eaf6ed; color:#1f6339; } .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-top:28px; } .card { min-height:150px; padding:20px; text-align:left; border-radius:16px; background:white; box-shadow:0 8px 24px rgb(18 63 34 / 10%); } .card span,.card strong,.card small { display:block; } .card span { font-size:1.7rem; margin-bottom:12px; } .card strong { color:#153b24; } .card small { margin-top:7px; color:#52725c; line-height:1.35; } .workspace { margin-top:28px; padding:24px; border-radius:18px; background:white; box-shadow:0 8px 24px rgb(18 63 34 / 10%); } .workspace form { grid-template-columns:2fr 1fr auto; align-items:center; } table { width:100%; margin-top:18px; border-collapse:collapse; text-align:left; } th,td { padding:12px 8px; border-bottom:1px solid #e3ece4; } th { color:#52725c; font-size:.8rem; text-transform:uppercase; } @media (max-width:700px) { .workspace form { grid-template-columns:1fr; } table { font-size:.8rem; } }
+    :host {
+      display: block;
+      min-height: 100dvh;
+    }
+    main {
+      display: grid;
+      min-height: 100dvh;
+      place-items: center;
+      padding: 24px;
+    }
+    .hero {
+      width: min(100%, 560px);
+      padding: clamp(28px, 8vw, 56px);
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: 0 18px 50px rgb(18 63 34 / 14%);
+    }
+    .eyebrow {
+      margin: 0;
+      color: #277848;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 8px 0 12px;
+      color: #153b24;
+      font-size: clamp(2.4rem, 10vw, 4rem);
+      line-height: 1;
+    }
+    .lead {
+      margin: 0;
+      color: #34513e;
+      font-size: 1.1rem;
+      line-height: 1.55;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 28px 0 16px;
+    }
+    button {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+    .tabs button {
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: transparent;
+      color: #52725c;
+    }
+    .tabs .active {
+      background: #eaf6ed;
+      color: #1f6339;
+      font-weight: 700;
+    }
+    form {
+      display: grid;
+      gap: 12px;
+    }
+    input,
+    select {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px;
+      border: 1px solid #bed1c1;
+      border-radius: 10px;
+      font: inherit;
+    }
+    .submit {
+      min-height: 48px;
+      border-radius: 10px;
+      background: #1f6d3c;
+      color: white;
+      font-weight: 700;
+    }
+    .submit:disabled {
+      opacity: 0.6;
+    }
+    .status {
+      margin: 20px 0 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #eaf6ed;
+      color: #1f6339;
+      line-height: 1.45;
+    }
+    .error {
+      background: #fff0ef;
+      color: #9c2c22;
+    }
+    .dashboard {
+      width: min(1100px, 100%);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .logout,
+    .refresh {
+      padding: 10px 14px;
+      border-radius: 9px;
+      background: #eaf6ed;
+      color: #1f6339;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .card {
+      min-height: 150px;
+      padding: 20px;
+      text-align: left;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 8px 24px rgb(18 63 34 / 10%);
+    }
+    .card span,
+    .card strong,
+    .card small {
+      display: block;
+    }
+    .card span {
+      font-size: 1.7rem;
+      margin-bottom: 12px;
+    }
+    .card strong {
+      color: #153b24;
+    }
+    .card small {
+      margin-top: 7px;
+      color: #52725c;
+      line-height: 1.35;
+    }
+    .workspace {
+      margin-top: 28px;
+      padding: 24px;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 8px 24px rgb(18 63 34 / 10%);
+    }
+    .workspace form {
+      grid-template-columns: 2fr 1fr auto;
+      align-items: center;
+    }
+    table {
+      width: 100%;
+      margin-top: 18px;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th,
+    td {
+      padding: 12px 8px;
+      border-bottom: 1px solid #e3ece4;
+    }
+    th {
+      color: #52725c;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+    @media (max-width: 700px) {
+      .workspace form {
+        grid-template-columns: 1fr;
+      }
+      table {
+        font-size: 0.8rem;
+      }
+    }
   `,
 })
 export class AppComponent {
-  mode: 'setup' | 'login' = 'setup'; loading = false; message = ''; isError = false; loggedIn = false; userName = ''; selectedModule = ''; productName = ''; baseUnit = 'ML'; purchaseSupplierId = ''; purchaseProductId = ''; purchaseQuantity: number | null = null; purchaseCost: number | null = null; newSupplier = { name: '', phone: '', email: '' }; suppliers: { id: string; name: string; phone?: string; email?: string }[] = []; inventory: { id: string; productId: string; quantity: string; averageCost: string; product: { code: string; name: string; baseUnit: string } }[] = [];
-  readonly modules = [{ icon: '📦', name: 'Inventario', description: 'Existencias y movimientos.' }, { icon: '🚚', name: 'Proveedores', description: 'Catálogo de proveedores.' }, { icon: '🧪', name: 'Aplicaciones', description: 'Registro de insumos usados.' }, { icon: '🌱', name: 'Fincas y lotes', description: 'Estructura agrícola.' }, { icon: '🛒', name: 'Compras', description: 'Ingresos y costos.' }, { icon: '🌾', name: 'Cosechas', description: 'Producción por calidad.' }, { icon: '🚛', name: 'Viajes', description: 'Costos de transporte.' }, { icon: '🧾', name: 'Gastos', description: 'Costos adicionales por cultivo.' }, { icon: '💰', name: 'Ventas', description: 'Ingresos por cultivo.' }, { icon: '⚙️', name: 'Catálogos', description: 'Edición y desactivación.' }, { icon: '📊', name: 'Reportes', description: 'Consultas y rentabilidad.' }];
+  mode: 'setup' | 'login' = 'setup';
+  loading = false;
+  message = '';
+  isError = false;
+  loggedIn = false;
+  userName = '';
+  selectedModule = '';
+  productName = '';
+  baseUnit = 'ML';
+  purchaseSupplierId = '';
+  purchaseProductId = '';
+  purchaseQuantity: number | null = null;
+  purchaseCost: number | null = null;
+  newSupplier = { name: '', phone: '', email: '' };
+  suppliers: { id: string; name: string; phone?: string; email?: string }[] = [];
+  inventory: {
+    id: string;
+    productId: string;
+    quantity: string;
+    averageCost: string;
+    product: { code: string; name: string; baseUnit: string };
+  }[] = [];
+  readonly modules = [
+    { icon: '📦', name: 'Inventario', description: 'Existencias y movimientos.' },
+    { icon: '🚚', name: 'Proveedores', description: 'Catálogo de proveedores.' },
+    { icon: '🧪', name: 'Aplicaciones', description: 'Registro de insumos usados.' },
+    { icon: '🌱', name: 'Fincas y lotes', description: 'Estructura agrícola.' },
+    { icon: '🛒', name: 'Compras', description: 'Ingresos y costos.' },
+    { icon: '🌾', name: 'Cosechas', description: 'Producción por calidad.' },
+    { icon: '🚛', name: 'Viajes', description: 'Costos de transporte.' },
+    { icon: '🧾', name: 'Gastos', description: 'Costos adicionales por cultivo.' },
+    { icon: '💰', name: 'Ventas', description: 'Ingresos por cultivo.' },
+    { icon: '⚙️', name: 'Catálogos', description: 'Edición y desactivación.' },
+    { icon: '📊', name: 'Reportes', description: 'Consultas y rentabilidad.' },
+  ];
   setup = { firstName: '', lastName: '', email: '', password: '', setupToken: '' };
   loginData = { email: '', password: '' };
   private agricultureRef?: ComponentRef<AgriculturePanelComponent>;
@@ -72,44 +428,381 @@ export class AppComponent {
   private catalogRef?: ComponentRef<CatalogPanelComponent>;
   private auditRef?: ComponentRef<AuditPanelComponent>;
   private dashboardIndicatorsRef?: ComponentRef<DashboardIndicatorsComponent>;
-  constructor(private readonly http: HttpClient, private readonly cdr: ChangeDetectorRef, private readonly appRef: ApplicationRef, private readonly injector: EnvironmentInjector) {}
-  ngOnInit(): void { this.modules.splice(this.modules.length - 1, 0, { icon: '📋', name: 'Auditoría', description: 'Historial de cambios.' }); }
-  bootstrap(): void { this.send('bootstrap-admin', this.setup); }
-  login(): void { this.send('login', this.loginData); }
-  private send(path: string, body: object): void {
-    this.loading = true; this.message = ''; this.http.post<{ accessToken: string; user: { id: string; name: string } }>(`http://localhost:3000/api/v1/auth/${path}`, body).subscribe({ next: ({ accessToken, user }) => { sessionStorage.setItem('agrocontrol_token', accessToken); sessionStorage.setItem('agrocontrol_user_id', user.id); this.userName = user.name; this.loggedIn = true; this.loading = false; this.cdr.detectChanges(); setTimeout(() => this.loadInventory()); }, error: (error: { error?: { message?: string } }) => { this.isError = true; this.message = error.error?.message ?? 'No fue posible completar la operación.'; this.loading = false; this.cdr.detectChanges(); } });
+  constructor(
+    private readonly http: HttpClient,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly appRef: ApplicationRef,
+    private readonly injector: EnvironmentInjector,
+  ) {}
+  ngOnInit(): void {
+    this.modules.splice(this.modules.length - 1, 0, { icon: '📋', name: 'Auditoría', description: 'Historial de cambios.' });
   }
-  selectModule(name: string): void { this.openModule(name); this.selectedModule = name; if (name === 'Inventario') this.showInventory(); else this.hideInventory(); if (name === 'Proveedores') this.loadSuppliers(); if (name === 'Fincas y lotes') this.showAgriculture(); else this.hideAgriculture(); if (name === 'Compras') this.showPurchases(); else this.hidePurchases(); if (name === 'Viajes') this.showTransport(); else this.hideTransport(); if (name === 'Aplicaciones') this.showApplications(); else this.hideApplications(); if (name === 'Cosechas') this.showHarvests(); else this.hideHarvests(); if (name === 'Gastos') this.showExpenses(); else this.hideExpenses(); if (name === 'Ventas') this.showSales(); else this.hideSales(); if (name === 'Catálogos') this.showCatalog(); else this.hideCatalog(); if (name === 'Auditoría') this.showAudit(); else this.hideAudit(); if (name === 'Reportes') this.showReports(); else this.hideReports(); }
-  private openModule(name: string): void { document.body.classList.add('module-open'); const dashboard = document.querySelector('.dashboard'); if (!dashboard || document.querySelector('.module-nav')) return; const nav = document.createElement('div'); nav.className = 'module-nav'; nav.innerHTML = `<button type="button">← Volver al menú</button><span>${name}</span>`; nav.querySelector('button')?.addEventListener('click', () => this.closeModule()); dashboard.prepend(nav); }
-  closeModule(): void { this.selectedModule = ''; this.hideAgriculture(); this.hideTransport(); this.hideApplications(); this.hideReports(); this.hideSales(); this.hideHarvests(); this.hideExpenses(); this.hidePurchases(); this.hideInventory(); this.hideCatalog(); this.hideAudit(); document.querySelector('.module-nav')?.remove(); document.body.classList.remove('module-open'); this.cdr.detectChanges(); }
-  private showAgriculture(): void { if (this.agricultureRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.agricultureRef = createComponent(AgriculturePanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.agricultureRef.hostView); host.appendChild(this.agricultureRef.location.nativeElement); }
-  private hideAgriculture(): void { if (!this.agricultureRef) return; this.appRef.detachView(this.agricultureRef.hostView); this.agricultureRef.destroy(); this.agricultureRef = undefined; }
-  private showTransport(): void { if (this.transportRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.transportRef = createComponent(TransportPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.transportRef.hostView); host.appendChild(this.transportRef.location.nativeElement); }
-  private hideTransport(): void { if (!this.transportRef) return; this.appRef.detachView(this.transportRef.hostView); this.transportRef.destroy(); this.transportRef = undefined; }
-  private showApplications(): void { if (this.applicationsRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.applicationsRef = createComponent(ApplicationsPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.applicationsRef.hostView); host.appendChild(this.applicationsRef.location.nativeElement); }
-  private hideApplications(): void { if (!this.applicationsRef) return; this.appRef.detachView(this.applicationsRef.hostView); this.applicationsRef.destroy(); this.applicationsRef = undefined; }
-  private showSales(): void { if (this.salesRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.salesRef = createComponent(SalesPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.salesRef.hostView); host.appendChild(this.salesRef.location.nativeElement); }
-  private hideSales(): void { if (!this.salesRef) return; this.appRef.detachView(this.salesRef.hostView); this.salesRef.destroy(); this.salesRef = undefined; }
-  private showHarvests(): void { if (this.harvestsRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.harvestsRef = createComponent(HarvestsPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.harvestsRef.hostView); host.appendChild(this.harvestsRef.location.nativeElement); }
-  private hideHarvests(): void { if (!this.harvestsRef) return; this.appRef.detachView(this.harvestsRef.hostView); this.harvestsRef.destroy(); this.harvestsRef = undefined; }
-  private showExpenses(): void { if (this.expensesRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.expensesRef = createComponent(ExpensesPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.expensesRef.hostView); host.appendChild(this.expensesRef.location.nativeElement); }
-  private hideExpenses(): void { if (!this.expensesRef) return; this.appRef.detachView(this.expensesRef.hostView); this.expensesRef.destroy(); this.expensesRef = undefined; }
-  private showPurchases(): void { if (this.purchasesRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.purchasesRef = createComponent(PurchasesPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.purchasesRef.hostView); host.appendChild(this.purchasesRef.location.nativeElement); }
-  private hidePurchases(): void { if (!this.purchasesRef) return; this.appRef.detachView(this.purchasesRef.hostView); this.purchasesRef.destroy(); this.purchasesRef = undefined; }
-  private showInventory(): void { if (this.inventoryRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.inventoryRef = createComponent(InventoryPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.inventoryRef.hostView); host.appendChild(this.inventoryRef.location.nativeElement); }
-  private hideInventory(): void { if (!this.inventoryRef) return; this.appRef.detachView(this.inventoryRef.hostView); this.inventoryRef.destroy(); this.inventoryRef = undefined; }
-  private showCatalog(): void { if (this.catalogRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.catalogRef = createComponent(CatalogPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.catalogRef.hostView); host.appendChild(this.catalogRef.location.nativeElement); }
-  private hideCatalog(): void { if (!this.catalogRef) return; this.appRef.detachView(this.catalogRef.hostView); this.catalogRef.destroy(); this.catalogRef = undefined; }
-  private showAudit(): void { if (this.auditRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.auditRef = createComponent(AuditPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.auditRef.hostView); host.appendChild(this.auditRef.location.nativeElement); }
-  private hideAudit(): void { if (!this.auditRef) return; this.appRef.detachView(this.auditRef.hostView); this.auditRef.destroy(); this.auditRef = undefined; }
-  private showDashboardIndicators(): void { if (this.dashboardIndicatorsRef) { this.dashboardIndicatorsRef.instance.load(); return; } const host = document.querySelector('.dashboard'); if (!host) return; this.dashboardIndicatorsRef = createComponent(DashboardIndicatorsComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.dashboardIndicatorsRef.hostView); host.appendChild(this.dashboardIndicatorsRef.location.nativeElement); }
-  private showReports(): void { if (this.reportsRef) return; this.selectedModule = ''; this.cdr.detectChanges(); const host = document.querySelector('.dashboard'); if (!host) return; this.reportsRef = createComponent(ReportsPanelComponent, { environmentInjector: this.injector }); this.appRef.attachView(this.reportsRef.hostView); host.appendChild(this.reportsRef.location.nativeElement); }
-  private hideReports(): void { if (!this.reportsRef) return; this.appRef.detachView(this.reportsRef.hostView); this.reportsRef.destroy(); this.reportsRef = undefined; }
-  loadInventory(): void { this.http.get<typeof this.inventory>('http://localhost:3000/api/v1/inventory').subscribe({ next: (items) => { this.inventory = items; this.showDashboardIndicators(); this.setupBranding(); }, error: () => { this.isError = true; this.message = 'No fue posible consultar el inventario.'; } }); }
-  createProduct(): void { this.loading = true; this.http.post('http://localhost:3000/api/v1/products', { name: this.productName, baseUnit: this.baseUnit }).subscribe({ next: () => { this.productName = ''; this.loading = false; this.loadInventory(); }, error: () => { this.loading = false; this.isError = true; this.message = 'No fue posible crear el producto.'; } }); }
-  createPurchase(): void { if (!this.purchaseSupplierId || !this.purchaseProductId || !this.purchaseQuantity || !this.purchaseCost) return; this.loading = true; this.http.post('http://localhost:3000/api/v1/purchases', { supplierId: this.purchaseSupplierId, items: [{ productId: this.purchaseProductId, quantity: this.purchaseQuantity, totalCost: this.purchaseCost }] }).subscribe({ next: () => { this.purchaseQuantity = null; this.purchaseCost = null; this.loading = false; this.loadInventory(); }, error: () => { this.loading = false; this.isError = true; this.message = 'No fue posible registrar la compra.'; } }); }
-  loadSuppliers(): void { this.http.get<typeof this.suppliers>('http://localhost:3000/api/v1/suppliers').subscribe({ next: (items) => { this.suppliers = items; this.cdr.detectChanges(); }, error: () => { this.isError = true; this.message = 'No fue posible consultar los proveedores.'; this.cdr.detectChanges(); } }); }
-  createSupplier(): void { this.loading = true; this.http.post<{ id: string; name: string; phone?: string; email?: string }>('http://localhost:3000/api/v1/suppliers', this.newSupplier).subscribe({ next: (supplier) => { this.suppliers = [...this.suppliers, supplier].sort((a, b) => a.name.localeCompare(b.name)); this.newSupplier = { name: '', phone: '', email: '' }; this.loading = false; this.loadSuppliers(); }, error: () => { this.loading = false; this.isError = true; this.message = 'No fue posible guardar el proveedor.'; } }); }
-  logout(): void { this.closeModule(); sessionStorage.removeItem('agrocontrol_token'); sessionStorage.removeItem('agrocontrol_user_id'); this.loggedIn = false; this.mode = 'login'; this.selectedModule = ''; }
-  private setupBranding(): void { const header = document.querySelector('.dashboard > header'); if (!header || header.querySelector('.brand-logo')) return; const logo = document.createElement('img'); logo.className = 'brand-logo'; logo.alt = 'Logo de Finca La Ceiba'; logo.src = 'assets/finca-la-ceiba-logo.png'; header.prepend(logo); }
+  bootstrap(): void {
+    this.send('bootstrap-admin', this.setup);
+  }
+  login(): void {
+    this.send('login', this.loginData);
+  }
+  private send(path: string, body: object): void {
+    this.loading = true;
+    this.message = '';
+    this.http
+      .post<{ accessToken: string; user: { id: string; name: string } }>(`http://localhost:3000/api/v1/auth/${path}`, body)
+      .subscribe({
+        next: ({ accessToken, user }) => {
+          sessionStorage.setItem('agrocontrol_token', accessToken);
+          sessionStorage.setItem('agrocontrol_user_id', user.id);
+          this.userName = user.name;
+          this.loggedIn = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+          setTimeout(() => this.loadInventory());
+        },
+        error: (error: { error?: { message?: string } }) => {
+          this.isError = true;
+          this.message = error.error?.message ?? 'No fue posible completar la operación.';
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+  selectModule(name: string): void {
+    this.openModule(name);
+    this.selectedModule = name;
+    if (name === 'Inventario') this.showInventory();
+    else this.hideInventory();
+    if (name === 'Proveedores') this.loadSuppliers();
+    if (name === 'Fincas y lotes') this.showAgriculture();
+    else this.hideAgriculture();
+    if (name === 'Compras') this.showPurchases();
+    else this.hidePurchases();
+    if (name === 'Viajes') this.showTransport();
+    else this.hideTransport();
+    if (name === 'Aplicaciones') this.showApplications();
+    else this.hideApplications();
+    if (name === 'Cosechas') this.showHarvests();
+    else this.hideHarvests();
+    if (name === 'Gastos') this.showExpenses();
+    else this.hideExpenses();
+    if (name === 'Ventas') this.showSales();
+    else this.hideSales();
+    if (name === 'Catálogos') this.showCatalog();
+    else this.hideCatalog();
+    if (name === 'Auditoría') this.showAudit();
+    else this.hideAudit();
+    if (name === 'Reportes') this.showReports();
+    else this.hideReports();
+  }
+  private openModule(name: string): void {
+    document.body.classList.add('module-open');
+    const dashboard = document.querySelector('.dashboard');
+    if (!dashboard || document.querySelector('.module-nav')) return;
+    const nav = document.createElement('div');
+    nav.className = 'module-nav';
+    nav.innerHTML = `<button type="button">← Volver al menú</button><span>${name}</span>`;
+    nav.querySelector('button')?.addEventListener('click', () => this.closeModule());
+    dashboard.prepend(nav);
+  }
+  closeModule(): void {
+    this.selectedModule = '';
+    this.hideAgriculture();
+    this.hideTransport();
+    this.hideApplications();
+    this.hideReports();
+    this.hideSales();
+    this.hideHarvests();
+    this.hideExpenses();
+    this.hidePurchases();
+    this.hideInventory();
+    this.hideCatalog();
+    this.hideAudit();
+    document.querySelector('.module-nav')?.remove();
+    document.body.classList.remove('module-open');
+    this.cdr.detectChanges();
+  }
+  private showAgriculture(): void {
+    if (this.agricultureRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.agricultureRef = createComponent(AgriculturePanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.agricultureRef.hostView);
+    host.appendChild(this.agricultureRef.location.nativeElement);
+  }
+  private hideAgriculture(): void {
+    if (!this.agricultureRef) return;
+    this.appRef.detachView(this.agricultureRef.hostView);
+    this.agricultureRef.destroy();
+    this.agricultureRef = undefined;
+  }
+  private showTransport(): void {
+    if (this.transportRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.transportRef = createComponent(TransportPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.transportRef.hostView);
+    host.appendChild(this.transportRef.location.nativeElement);
+  }
+  private hideTransport(): void {
+    if (!this.transportRef) return;
+    this.appRef.detachView(this.transportRef.hostView);
+    this.transportRef.destroy();
+    this.transportRef = undefined;
+  }
+  private showApplications(): void {
+    if (this.applicationsRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.applicationsRef = createComponent(ApplicationsPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.applicationsRef.hostView);
+    host.appendChild(this.applicationsRef.location.nativeElement);
+  }
+  private hideApplications(): void {
+    if (!this.applicationsRef) return;
+    this.appRef.detachView(this.applicationsRef.hostView);
+    this.applicationsRef.destroy();
+    this.applicationsRef = undefined;
+  }
+  private showSales(): void {
+    if (this.salesRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.salesRef = createComponent(SalesPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.salesRef.hostView);
+    host.appendChild(this.salesRef.location.nativeElement);
+  }
+  private hideSales(): void {
+    if (!this.salesRef) return;
+    this.appRef.detachView(this.salesRef.hostView);
+    this.salesRef.destroy();
+    this.salesRef = undefined;
+  }
+  private showHarvests(): void {
+    if (this.harvestsRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.harvestsRef = createComponent(HarvestsPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.harvestsRef.hostView);
+    host.appendChild(this.harvestsRef.location.nativeElement);
+  }
+  private hideHarvests(): void {
+    if (!this.harvestsRef) return;
+    this.appRef.detachView(this.harvestsRef.hostView);
+    this.harvestsRef.destroy();
+    this.harvestsRef = undefined;
+  }
+  private showExpenses(): void {
+    if (this.expensesRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.expensesRef = createComponent(ExpensesPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.expensesRef.hostView);
+    host.appendChild(this.expensesRef.location.nativeElement);
+  }
+  private hideExpenses(): void {
+    if (!this.expensesRef) return;
+    this.appRef.detachView(this.expensesRef.hostView);
+    this.expensesRef.destroy();
+    this.expensesRef = undefined;
+  }
+  private showPurchases(): void {
+    if (this.purchasesRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.purchasesRef = createComponent(PurchasesPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.purchasesRef.hostView);
+    host.appendChild(this.purchasesRef.location.nativeElement);
+  }
+  private hidePurchases(): void {
+    if (!this.purchasesRef) return;
+    this.appRef.detachView(this.purchasesRef.hostView);
+    this.purchasesRef.destroy();
+    this.purchasesRef = undefined;
+  }
+  private showInventory(): void {
+    if (this.inventoryRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.inventoryRef = createComponent(InventoryPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.inventoryRef.hostView);
+    host.appendChild(this.inventoryRef.location.nativeElement);
+  }
+  private hideInventory(): void {
+    if (!this.inventoryRef) return;
+    this.appRef.detachView(this.inventoryRef.hostView);
+    this.inventoryRef.destroy();
+    this.inventoryRef = undefined;
+  }
+  private showCatalog(): void {
+    if (this.catalogRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.catalogRef = createComponent(CatalogPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.catalogRef.hostView);
+    host.appendChild(this.catalogRef.location.nativeElement);
+  }
+  private hideCatalog(): void {
+    if (!this.catalogRef) return;
+    this.appRef.detachView(this.catalogRef.hostView);
+    this.catalogRef.destroy();
+    this.catalogRef = undefined;
+  }
+  private showAudit(): void {
+    if (this.auditRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.auditRef = createComponent(AuditPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.auditRef.hostView);
+    host.appendChild(this.auditRef.location.nativeElement);
+  }
+  private hideAudit(): void {
+    if (!this.auditRef) return;
+    this.appRef.detachView(this.auditRef.hostView);
+    this.auditRef.destroy();
+    this.auditRef = undefined;
+  }
+  private showDashboardIndicators(): void {
+    if (this.dashboardIndicatorsRef) {
+      this.dashboardIndicatorsRef.instance.load();
+      return;
+    }
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.dashboardIndicatorsRef = createComponent(DashboardIndicatorsComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.dashboardIndicatorsRef.hostView);
+    host.appendChild(this.dashboardIndicatorsRef.location.nativeElement);
+  }
+  private showReports(): void {
+    if (this.reportsRef) return;
+    this.selectedModule = '';
+    this.cdr.detectChanges();
+    const host = document.querySelector('.dashboard');
+    if (!host) return;
+    this.reportsRef = createComponent(ReportsPanelComponent, { environmentInjector: this.injector });
+    this.appRef.attachView(this.reportsRef.hostView);
+    host.appendChild(this.reportsRef.location.nativeElement);
+  }
+  private hideReports(): void {
+    if (!this.reportsRef) return;
+    this.appRef.detachView(this.reportsRef.hostView);
+    this.reportsRef.destroy();
+    this.reportsRef = undefined;
+  }
+  loadInventory(): void {
+    this.http.get<typeof this.inventory>('http://localhost:3000/api/v1/inventory').subscribe({
+      next: (items) => {
+        this.inventory = items;
+        this.showDashboardIndicators();
+        this.setupBranding();
+      },
+      error: () => {
+        this.isError = true;
+        this.message = 'No fue posible consultar el inventario.';
+      },
+    });
+  }
+  createProduct(): void {
+    this.loading = true;
+    this.http.post('http://localhost:3000/api/v1/products', { name: this.productName, baseUnit: this.baseUnit }).subscribe({
+      next: () => {
+        this.productName = '';
+        this.loading = false;
+        this.loadInventory();
+      },
+      error: () => {
+        this.loading = false;
+        this.isError = true;
+        this.message = 'No fue posible crear el producto.';
+      },
+    });
+  }
+  createPurchase(): void {
+    if (!this.purchaseSupplierId || !this.purchaseProductId || !this.purchaseQuantity || !this.purchaseCost) return;
+    this.loading = true;
+    this.http
+      .post('http://localhost:3000/api/v1/purchases', {
+        supplierId: this.purchaseSupplierId,
+        items: [{ productId: this.purchaseProductId, quantity: this.purchaseQuantity, totalCost: this.purchaseCost }],
+      })
+      .subscribe({
+        next: () => {
+          this.purchaseQuantity = null;
+          this.purchaseCost = null;
+          this.loading = false;
+          this.loadInventory();
+        },
+        error: () => {
+          this.loading = false;
+          this.isError = true;
+          this.message = 'No fue posible registrar la compra.';
+        },
+      });
+  }
+  loadSuppliers(): void {
+    this.http.get<typeof this.suppliers>('http://localhost:3000/api/v1/suppliers').subscribe({
+      next: (items) => {
+        this.suppliers = items;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isError = true;
+        this.message = 'No fue posible consultar los proveedores.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+  createSupplier(): void {
+    this.loading = true;
+    this.http
+      .post<{ id: string; name: string; phone?: string; email?: string }>('http://localhost:3000/api/v1/suppliers', this.newSupplier)
+      .subscribe({
+        next: (supplier) => {
+          this.suppliers = [...this.suppliers, supplier].sort((a, b) => a.name.localeCompare(b.name));
+          this.newSupplier = { name: '', phone: '', email: '' };
+          this.loading = false;
+          this.loadSuppliers();
+        },
+        error: () => {
+          this.loading = false;
+          this.isError = true;
+          this.message = 'No fue posible guardar el proveedor.';
+        },
+      });
+  }
+  logout(): void {
+    this.closeModule();
+    sessionStorage.removeItem('agrocontrol_token');
+    sessionStorage.removeItem('agrocontrol_user_id');
+    this.loggedIn = false;
+    this.mode = 'login';
+    this.selectedModule = '';
+  }
+  private setupBranding(): void {
+    const header = document.querySelector('.dashboard > header');
+    if (!header || header.querySelector('.brand-logo')) return;
+    const logo = document.createElement('img');
+    logo.className = 'brand-logo';
+    logo.alt = 'Logo de Finca La Ceiba';
+    logo.src = 'assets/finca-la-ceiba-logo.png';
+    header.prepend(logo);
+  }
 }

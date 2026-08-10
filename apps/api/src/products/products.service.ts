@@ -5,14 +5,21 @@ import { CreateProductDto } from './dto/create-product.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService, private readonly sequence: SequenceService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sequence: SequenceService,
+  ) {}
 
   findAll() {
     return this.prisma.product.findMany({ include: { inventory: true }, orderBy: { name: 'asc' } });
   }
 
-  update(id: string, dto: CreateProductDto) { return this.prisma.product.update({ where: { id }, data: { name: dto.name.trim(), baseUnit: dto.baseUnit, minStock: dto.minStock } }); }
-  deactivate(id: string) { return this.prisma.product.update({ where: { id }, data: { isActive: false } }); }
+  update(id: string, dto: CreateProductDto) {
+    return this.prisma.product.update({ where: { id }, data: { name: dto.name.trim(), baseUnit: dto.baseUnit, minStock: dto.minStock } });
+  }
+  deactivate(id: string) {
+    return this.prisma.product.update({ where: { id }, data: { isActive: false } });
+  }
 
   async create(dto: CreateProductDto) {
     const existing = await this.prisma.product.findFirst({ where: { name: { equals: dto.name, mode: 'insensitive' } } });

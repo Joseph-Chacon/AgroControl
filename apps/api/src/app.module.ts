@@ -12,7 +12,18 @@ import { SuppliersModule } from './suppliers/suppliers.module';
 import { AuditModule } from './audit/audit.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, ProductsModule, PurchasesModule, AgricultureModule, ApplicationsModule, InventoryModule, FinanceModule, SuppliersModule, AuditModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    ProductsModule,
+    PurchasesModule,
+    AgricultureModule,
+    ApplicationsModule,
+    InventoryModule,
+    FinanceModule,
+    SuppliersModule,
+    AuditModule,
+  ],
   controllers: [HealthController],
 })
 export class AppModule {}

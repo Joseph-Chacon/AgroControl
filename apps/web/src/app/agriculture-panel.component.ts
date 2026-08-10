@@ -2,6 +2,204 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-type Crop={id:string;name:string;isActive:boolean;plantedAt:string;plantedPlants:number;removedAt?:string;daysPlanted:number}; type Lot={id:string;code:string;name:string;crops:Crop[]}; type Farm={id:string;name:string;lots:Lot[]};
-@Component({selector:'ac-agriculture-panel',standalone:true,imports:[CommonModule,FormsModule],template:`<section class="workspace"><h2>Fincas, lotes y cultivos</h2><form (ngSubmit)="createFarm()"><input name="farmName" [(ngModel)]="farmName" placeholder="Nombre de la finca" required><button [disabled]="loading">Guardar finca</button></form>@for(farm of farms;track farm.id){<article><h3>{{farm.name}}</h3><form (ngSubmit)="createLot(farm.id)"><input [name]="'lot-'+farm.id" [(ngModel)]="lotNames[farm.id]" placeholder="Nombre del lote" required><button>Agregar lote</button></form>@for(lot of farm.lots;track lot.id){<div class="lot"><strong>{{lot.code}} · {{lot.name}}</strong><form (ngSubmit)="createCrop(lot.id)"><input [name]="'crop-'+lot.id" [(ngModel)]="cropNames[lot.id]" placeholder="Cultivo" required><input [name]="'plant-'+lot.id" [(ngModel)]="cropDates[lot.id]" type="date" required><input [name]="'plants-'+lot.id" [(ngModel)]="cropPlants[lot.id]" type="number" min="1" placeholder="Cantidad de matas" required><button>Agregar cultivo</button></form>@for(crop of lot.crops;track crop.id){<p class="crop"><strong>{{crop.name}}</strong> · {{crop.plantedPlants}} matas · {{crop.daysPlanted}} días · siembra: {{crop.plantedAt|slice:0:10}} @if(crop.isActive){<input [name]="'removed-'+crop.id" [(ngModel)]="cropRemovalDates[crop.id]" type="date"><button type="button" (click)="removeCrop(crop.id)">Retirar matas</button>}@else{<em>Finalizado: {{crop.removedAt|slice:0:10}}</em>}</p>}</div>}</article>}@empty{<p>Aún no hay fincas registradas.</p>}</section>`,styles:`.workspace{margin-top:28px;padding:24px;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgb(18 63 34 / 10%)}form{display:flex;gap:10px;margin:12px 0}input{min-height:42px;flex:1;padding:9px;border:1px solid #bed1c1;border-radius:8px}button{border:0;border-radius:8px;background:#1f6d3c;color:#fff;padding:9px 12px;cursor:pointer}article{margin-top:18px;padding:14px;border:1px solid #e3ece4;border-radius:10px}h3{margin:0}.lot{margin-top:12px;padding-left:12px;border-left:3px solid #b8d8c0}.crop{color:#34513e}.crop input{min-height:34px;max-width:150px;margin-left:8px}.crop button{margin-left:8px;background:#a64932}.crop em{margin-left:8px;color:#52725c}@media(max-width:650px){form{flex-direction:column}}`})
-export class AgriculturePanelComponent{farms:Farm[]=[];farmName='';lotNames:Record<string,string>={};cropNames:Record<string,string>={};cropDates:Record<string,string>={};cropPlants:Record<string,number|null>={};cropRemovalDates:Record<string,string>={};loading=false;constructor(private http:HttpClient,private cdr:ChangeDetectorRef){this.load()}load(){this.http.get<Farm[]>('http://localhost:3000/api/v1/agriculture/farms').subscribe({next:farms=>{this.farms=farms;this.cdr.detectChanges()}})}createFarm(){this.loading=true;this.http.post('http://localhost:3000/api/v1/agriculture/farms',{name:this.farmName}).subscribe({next:()=>{this.farmName='';this.loading=false;this.load()},error:()=>this.loading=false})}createLot(farmId:string){const name=this.lotNames[farmId];if(!name)return;this.http.post('http://localhost:3000/api/v1/agriculture/lots',{farmId,name}).subscribe({next:()=>{this.lotNames[farmId]='';this.load()}})}createCrop(lotId:string){const name=this.cropNames[lotId],plantedAt=this.cropDates[lotId],plantedPlants=this.cropPlants[lotId];if(!name||!plantedAt||!plantedPlants)return;this.http.post('http://localhost:3000/api/v1/agriculture/crops',{lotId,name,plantedAt,plantedPlants}).subscribe({next:()=>{this.cropNames[lotId]='';this.cropDates[lotId]='';this.cropPlants[lotId]=null;this.load()}})}removeCrop(cropId:string){const removedAt=this.cropRemovalDates[cropId]||new Date().toISOString().slice(0,10);this.http.patch(`http://localhost:3000/api/v1/agriculture/crops/${cropId}/remove`,{removedAt}).subscribe({next:()=>this.load()})}}
+type Crop = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  plantedAt: string;
+  plantedPlants: number;
+  removedAt?: string;
+  daysPlanted: number;
+};
+type Lot = { id: string; code: string; name: string; crops: Crop[] };
+type Farm = { id: string; name: string; lots: Lot[] };
+@Component({
+  selector: 'ac-agriculture-panel',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `<section class="workspace">
+    <h2>Fincas, lotes y cultivos</h2>
+    <form (ngSubmit)="createFarm()">
+      <input name="farmName" [(ngModel)]="farmName" placeholder="Nombre de la finca" required /><button [disabled]="loading">
+        Guardar finca
+      </button>
+    </form>
+    @for (farm of farms; track farm.id) {
+      <article>
+        <h3>{{ farm.name }}</h3>
+        <form (ngSubmit)="createLot(farm.id)">
+          <input [name]="'lot-' + farm.id" [(ngModel)]="lotNames[farm.id]" placeholder="Nombre del lote" required /><button>
+            Agregar lote
+          </button>
+        </form>
+        @for (lot of farm.lots; track lot.id) {
+          <div class="lot">
+            <strong>{{ lot.code }} · {{ lot.name }}</strong>
+            <form (ngSubmit)="createCrop(lot.id)">
+              <input [name]="'crop-' + lot.id" [(ngModel)]="cropNames[lot.id]" placeholder="Cultivo" required /><input
+                [name]="'plant-' + lot.id"
+                [(ngModel)]="cropDates[lot.id]"
+                type="date"
+                required
+              /><input
+                [name]="'plants-' + lot.id"
+                [(ngModel)]="cropPlants[lot.id]"
+                type="number"
+                min="1"
+                placeholder="Cantidad de matas"
+                required
+              /><button>Agregar cultivo</button>
+            </form>
+            @for (crop of lot.crops; track crop.id) {
+              <p class="crop">
+                <strong>{{ crop.name }}</strong> · {{ crop.plantedPlants }} matas · {{ crop.daysPlanted }} días · siembra:
+                {{ crop.plantedAt | slice: 0 : 10 }}
+                @if (crop.isActive) {
+                  <input [name]="'removed-' + crop.id" [(ngModel)]="cropRemovalDates[crop.id]" type="date" /><button
+                    type="button"
+                    (click)="removeCrop(crop.id)"
+                  >
+                    Retirar matas
+                  </button>
+                } @else {
+                  <em>Finalizado: {{ crop.removedAt | slice: 0 : 10 }}</em>
+                }
+              </p>
+            }
+          </div>
+        }
+      </article>
+    } @empty {
+      <p>Aún no hay fincas registradas.</p>
+    }
+  </section>`,
+  styles: `
+    .workspace {
+      margin-top: 28px;
+      padding: 24px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 8px 24px rgb(18 63 34 / 10%);
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    input {
+      min-height: 42px;
+      flex: 1;
+      padding: 9px;
+      border: 1px solid #bed1c1;
+      border-radius: 8px;
+    }
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: #1f6d3c;
+      color: #fff;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+    article {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid #e3ece4;
+      border-radius: 10px;
+    }
+    h3 {
+      margin: 0;
+    }
+    .lot {
+      margin-top: 12px;
+      padding-left: 12px;
+      border-left: 3px solid #b8d8c0;
+    }
+    .crop {
+      color: #34513e;
+    }
+    .crop input {
+      min-height: 34px;
+      max-width: 150px;
+      margin-left: 8px;
+    }
+    .crop button {
+      margin-left: 8px;
+      background: #a64932;
+    }
+    .crop em {
+      margin-left: 8px;
+      color: #52725c;
+    }
+    @media (max-width: 650px) {
+      form {
+        flex-direction: column;
+      }
+    }
+  `,
+})
+export class AgriculturePanelComponent {
+  farms: Farm[] = [];
+  farmName = '';
+  lotNames: Record<string, string> = {};
+  cropNames: Record<string, string> = {};
+  cropDates: Record<string, string> = {};
+  cropPlants: Record<string, number | null> = {};
+  cropRemovalDates: Record<string, string> = {};
+  loading = false;
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+  ) {
+    this.load();
+  }
+  load() {
+    this.http.get<Farm[]>('http://localhost:3000/api/v1/agriculture/farms').subscribe({
+      next: (farms) => {
+        this.farms = farms;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+  createFarm() {
+    this.loading = true;
+    this.http.post('http://localhost:3000/api/v1/agriculture/farms', { name: this.farmName }).subscribe({
+      next: () => {
+        this.farmName = '';
+        this.loading = false;
+        this.load();
+      },
+      error: () => (this.loading = false),
+    });
+  }
+  createLot(farmId: string) {
+    const name = this.lotNames[farmId];
+    if (!name) return;
+    this.http.post('http://localhost:3000/api/v1/agriculture/lots', { farmId, name }).subscribe({
+      next: () => {
+        this.lotNames[farmId] = '';
+        this.load();
+      },
+    });
+  }
+  createCrop(lotId: string) {
+    const name = this.cropNames[lotId],
+      plantedAt = this.cropDates[lotId],
+      plantedPlants = this.cropPlants[lotId];
+    if (!name || !plantedAt || !plantedPlants) return;
+    this.http.post('http://localhost:3000/api/v1/agriculture/crops', { lotId, name, plantedAt, plantedPlants }).subscribe({
+      next: () => {
+        this.cropNames[lotId] = '';
+        this.cropDates[lotId] = '';
+        this.cropPlants[lotId] = null;
+        this.load();
+      },
+    });
+  }
+  removeCrop(cropId: string) {
+    const removedAt = this.cropRemovalDates[cropId] || new Date().toISOString().slice(0, 10);
+    this.http
+      .patch(`http://localhost:3000/api/v1/agriculture/crops/${cropId}/remove`, { removedAt })
+      .subscribe({ next: () => this.load() });
+  }
+}

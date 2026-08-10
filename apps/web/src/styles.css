@@ -1,18 +1,31 @@
 :root {
   color: #1b3323;
   background: #f4f8f3;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-body { margin: 0; }
+body {
+  margin: 0;
+}
 
 /* Una vista de módulo reemplaza temporalmente el panel principal. */
 body.module-open .dashboard > header,
 body.module-open .dashboard > .lead,
 body.module-open .dashboard > .cards,
-body.module-open .dashboard > ac-dashboard-indicators { display: none; }
+body.module-open .dashboard > ac-dashboard-indicators {
+  display: none;
+}
 
 .module-nav {
   display: flex;
@@ -36,12 +49,25 @@ body.module-open .dashboard > ac-dashboard-indicators { display: none; }
   cursor: pointer;
 }
 
-.module-nav button:hover { background: #d8efdd; }
+.module-nav button:hover {
+  background: #d8efdd;
+}
 
-.brand-logo { width: 300px; height: 200px; margin-right: 18px; object-fit: contain; background: transparent; box-shadow: none; }
+.brand-logo {
+  width: 300px;
+  height: 200px;
+  margin-right: 18px;
+  object-fit: contain;
+  background: transparent;
+  box-shadow: none;
+}
 
 /* Sistema visual único para todos los módulos. */
-button { border: 0; font: inherit; cursor: pointer; }
+button {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
 
 .workspace,
 .indicators {
@@ -55,7 +81,9 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .workspace h2,
 .workspace h3,
-.indicators h2 { color: #153b24; }
+.indicators h2 {
+  color: #153b24;
+}
 
 .workspace form {
   display: grid;
@@ -79,7 +107,9 @@ button { border: 0; font: inherit; cursor: pointer; }
   color: #1b3323;
   font: inherit;
   outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .workspace input:focus,
@@ -107,16 +137,26 @@ button { border: 0; font: inherit; cursor: pointer; }
   font: inherit;
   font-weight: 700;
   line-height: 1;
-  transition: background .15s ease, transform .15s ease, opacity .15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .workspace button:hover,
 .detail button:hover,
 .hero .submit:hover,
-.indicators button:hover { background: #175a30 !important; transform: translateY(-1px); }
+.indicators button:hover {
+  background: #175a30 !important;
+  transform: translateY(-1px);
+}
 .workspace button:disabled,
 .detail button:disabled,
-.hero .submit:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+.hero .submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
 
 .workspace table {
   width: 100% !important;
@@ -140,17 +180,23 @@ button { border: 0; font: inherit; cursor: pointer; }
 .workspace th {
   background: #eef7ef !important;
   color: #39704a !important;
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.workspace tbody tr:last-child td { border-bottom: 0 !important; }
-.workspace tbody tr:hover { background: #f7fbf7; }
+.workspace tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+.workspace tbody tr:hover {
+  background: #f7fbf7;
+}
 
 /* Acciones consecutivas de una fila: consultar, anular, editar, etc. */
-.workspace td button + button { margin-left: 8px !important; }
+.workspace td button + button {
+  margin-left: 8px !important;
+}
 
 /* El último botón de las acciones documentales es la anulación. */
 ac-applications-panel .workspace td button:last-child:not(:only-child),
@@ -173,9 +219,17 @@ ac-sales-panel .workspace td button:last-child:not(:only-child):hover {
 
 @media (max-width: 700px) {
   .workspace,
-  .indicators { padding: 18px; }
-  .workspace form { grid-template-columns: 1fr !important; }
-  .workspace table { display: block; overflow-x: auto; white-space: nowrap; }
+  .indicators {
+    padding: 18px;
+  }
+  .workspace form {
+    grid-template-columns: 1fr !important;
+  }
+  .workspace table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 
 .detail {
@@ -195,7 +249,9 @@ ac-sales-panel .workspace td button:last-child:not(:only-child):hover {
   box-shadow: 0 22px 70px rgb(0 0 0 / 32%);
 }
 
-body:has(.detail) { overflow: hidden; }
+body:has(.detail) {
+  overflow: hidden;
+}
 
 .detail h3 {
   margin: 0 0 18px;
@@ -224,23 +280,49 @@ body:has(.detail) { overflow: hidden; }
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  transition: background .15s ease, transform .15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
-.detail button { margin-top: 18px; }
+.detail button {
+  margin-top: 18px;
+}
 
-.workspace input[name="notes"] + button { align-self: center; margin-left: 8px; }
+.workspace input[name='notes'] + button {
+  align-self: center;
+  margin-left: 8px;
+}
 
 .detail button:hover,
-.workspace button:hover { background: #175a30; transform: translateY(-1px); }
+.workspace button:hover {
+  background: #175a30;
+  transform: translateY(-1px);
+}
 
-.workspace h3 { margin-top: 28px; color: #153b24; }
+.workspace h3 {
+  margin-top: 28px;
+  color: #153b24;
+}
 
-.workspace form { align-items: center; }
+.workspace form {
+  align-items: center;
+}
 
-.workspace table { border: 1px solid #e0ece2; border-radius: 12px; overflow: hidden; background: #fff; }
+.workspace table {
+  border: 1px solid #e0ece2;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
 
-.workspace th { background: #eef7ef; color: #39704a; font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
+.workspace th {
+  background: #eef7ef;
+  color: #39704a;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 .detail::before {
   content: '';
