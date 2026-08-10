@@ -17,6 +17,8 @@ enum MovementType {
   APPLICATION
   ADJUSTMENT_IN
   ADJUSTMENT_OUT
+  TRANSFORMATION_IN
+  TRANSFORMATION_OUT
 }
 
 enum HarvestGrade {
@@ -129,6 +131,8 @@ model Product {
   movements   InventoryMovement[]
   purchaseItems PurchaseItem[]
   applicationItems ApplicationItem[]
+  transformationOutputs InventoryTransformation[] @relation("TransformationOutput")
+  transformationItems InventoryTransformationItem[]
 
   @@map("products")
 }
@@ -336,4 +340,35 @@ model InventoryMovement {
   @@index([productId, occurredAt])
   @@index([referenceType, referenceId])
   @@map("inventory_movements")
+}
+
+model InventoryTransformation {
+  id              String   @id @default(uuid()) @db.Uuid
+  code            String   @unique
+  outputProductId String   @db.Uuid
+  outputQuantity  Decimal  @db.Decimal(18, 4)
+  totalCost       Decimal  @db.Decimal(18, 2)
+  notes           String?
+  createdAt       DateTime @default(now())
+  isVoided        Boolean  @default(false)
+  voidedAt        DateTime?
+  voidReason      String?
+  outputProduct   Product  @relation("TransformationOutput", fields: [outputProductId], references: [id], onDelete: Restrict)
+  items           InventoryTransformationItem[]
+
+  @@map("inventory_transformations")
+}
+
+model InventoryTransformationItem {
+  id               String                  @id @default(uuid()) @db.Uuid
+  transformationId String                  @db.Uuid
+  productId        String                  @db.Uuid
+  quantity         Decimal                 @db.Decimal(18, 4)
+  unitCost         Decimal                 @db.Decimal(18, 6)
+  totalCost        Decimal                 @db.Decimal(18, 2)
+  transformation   InventoryTransformation @relation(fields: [transformationId], references: [id], onDelete: Cascade)
+  product          Product                 @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([productId])
+  @@map("inventory_transformation_items")
 }
