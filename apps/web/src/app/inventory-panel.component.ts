@@ -24,97 +24,27 @@ type Transformation = {
   outputProduct: { name: string; baseUnit: string };
   items: { product: { name: string; baseUnit: string }; quantity: string; totalCost: string }[];
 };
+type InventoryModal = 'create' | 'transform' | 'adjust' | null;
 
 @Component({
   selector: 'ac-inventory-panel',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  template: `<section class="workspace">
-    <h2>Inventario</h2>
-    <form (ngSubmit)="create()">
-      <input name="name" [(ngModel)]="name" placeholder="Nuevo producto" /><select name="unit" [(ngModel)]="unit">
-        <option value="ML">mL</option>
-        <option value="G">g</option>
-        <option value="UND">Unidad</option></select
-      ><input name="min" [(ngModel)]="minStock" type="number" min="0" placeholder="Existencia mínima" /><button>Crear producto</button>
-    </form>
+  template: `<section class="workspace inventory-workspace">
+    <div class="inventory-heading">
+      <div>
+        <p class="eyebrow">CONTROL DE EXISTENCIAS</p>
+        <h2>Inventario</h2>
+        <p class="status">Consulta productos, costos y preparaciones registradas.</p>
+      </div>
+      <div class="inventory-actions">
+        <button type="button" (click)="openModal('create')">+ Crear producto</button
+        ><button type="button" (click)="openModal('transform')">⚗ Preparar productos</button
+        ><button type="button" (click)="openModal('adjust')">↕ Ajustar inventario</button>
+      </div>
+    </div>
 
-    <h3>Preparar o combinar productos</h3>
-    <p class="status">Crea primero el producto resultante. La preparación rebaja los insumos y le asigna el costo total de estos.</p>
-    <form (ngSubmit)="addTransformationLine()">
-      <select name="outputProduct" [(ngModel)]="outputProductId">
-        <option value="" disabled>Producto obtenido</option>
-        @for (i of inventory; track i.productId) {
-          <option [value]="i.productId">{{ i.product.name }} ({{ i.product.baseUnit }})</option>
-        }</select
-      ><select name="inputProduct" [(ngModel)]="inputProductId">
-        <option value="" disabled>Producto origen</option>
-        @for (i of availableInputs; track i.productId) {
-          <option [value]="i.productId">{{ i.product.name }} · disponible {{ i.quantity }} {{ i.product.baseUnit }}</option>
-        }</select
-      ><input
-        name="inputQuantity"
-        [(ngModel)]="inputQuantity"
-        type="number"
-        min="0.0001"
-        step="0.0001"
-        placeholder="Cantidad a usar"
-      /><button>Agregar insumo</button>
-    </form>
-    @if (transformationLines.length) {
-      <table>
-        <thead>
-          <tr>
-            <th>Producto origen</th>
-            <th>Cantidad</th>
-            <th>Costo usado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (line of transformationLines; track line.productId) {
-            <tr>
-              <td>{{ line.name }}</td>
-              <td>{{ line.quantity }} {{ line.baseUnit }}</td>
-              <td>₡{{ line.totalCost }}</td>
-              <td><button type="button" (click)="removeTransformationLine(line.productId)">Quitar</button></td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-    <form (ngSubmit)="saveTransformation()">
-      <input
-        name="outputQuantity"
-        [(ngModel)]="outputQuantity"
-        type="number"
-        min="0.0001"
-        step="0.0001"
-        placeholder="Cantidad obtenida"
-      /><input name="transformationNotes" [(ngModel)]="transformationNotes" placeholder="Observación de preparación" /><span
-        ><strong>Costo de insumos: ₡{{ transformationCost }}</strong></span
-      ><button [disabled]="transformationLines.length < 2">Guardar preparación</button>
-    </form>
-
-    <h3>Levantamiento y ajustes</h3>
-    <form (ngSubmit)="adjust()">
-      <select name="product" [(ngModel)]="adjustProduct">
-        <option value="" disabled>Producto</option>
-        @for (i of inventory; track i.productId) {
-          <option [value]="i.productId">{{ i.product.name }}</option>
-        }</select
-      ><select name="type" [(ngModel)]="adjustType">
-        <option value="INITIAL">Inventario inicial</option>
-        <option value="ADJUSTMENT_IN">Entrada de ajuste</option>
-        <option value="ADJUSTMENT_OUT">Salida de ajuste</option></select
-      ><input name="quantity" [(ngModel)]="adjustQuantity" type="number" min="0.0001" placeholder="Cantidad" />
-      @if (adjustType === 'INITIAL') {
-        <input name="cost" [(ngModel)]="unitCost" type="number" min="0.000001" placeholder="Costo unitario obligatorio" />
-      }
-      <input name="reason" [(ngModel)]="adjustReason" placeholder="Motivo" /><button>
-        {{ adjustType === 'INITIAL' ? 'Guardar inventario inicial' : 'Ajustar inventario' }}
-      </button>
-    </form>
+    <h3>Existencias actuales</h3>
     <table>
       <thead>
         <tr>
@@ -140,63 +70,218 @@ type Transformation = {
       </tbody>
     </table>
 
-    <h3>Preparaciones registradas</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Fecha</th>
-          <th>Producto obtenido</th>
-          <th>Cantidad</th>
-          <th>Costo</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (transformation of transformations; track transformation.id) {
+    <h3>Preparaciones recientes</h3>
+    @if (transformations.length) {
+      <table>
+        <thead>
           <tr>
-            <td>{{ transformation.code }}</td>
-            <td>{{ transformation.createdAt | slice: 0 : 10 }}</td>
-            <td>{{ transformation.outputProduct.name }}</td>
-            <td>{{ transformation.outputQuantity }} {{ transformation.outputProduct.baseUnit }}</td>
-            <td>₡{{ transformation.totalCost }}</td>
-            <td>
-              <button type="button" (click)="transformationDetail = transformation">Detalle</button
-              ><button type="button" (click)="voidTransformation(transformation)">Anular</button>
-            </td>
+            <th>Código</th>
+            <th>Fecha</th>
+            <th>Producto obtenido</th>
+            <th>Cantidad</th>
+            <th>Costo</th>
+            <th></th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (transformation of transformations; track transformation.id) {
+            <tr>
+              <td>{{ transformation.code }}</td>
+              <td>{{ transformation.createdAt | slice: 0 : 10 }}</td>
+              <td>{{ transformation.outputProduct.name }}</td>
+              <td>{{ transformation.outputQuantity }} {{ transformation.outputProduct.baseUnit }}</td>
+              <td>₡{{ transformation.totalCost }}</td>
+              <td>
+                <button type="button" (click)="transformationDetail = transformation">Detalle</button
+                ><button type="button" (click)="voidTransformation(transformation)">Anular</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="status">Aún no hay preparaciones registradas.</p>
+    }
+
+    @if (activeModal) {
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card inventory-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+          <header class="modal-header">
+            <div>
+              @if (activeModal === 'create') {
+                <p class="eyebrow">CATÁLOGO</p>
+                <h3>Crear producto</h3>
+              } @else if (activeModal === 'transform') {
+                <p class="eyebrow">PREPARACIÓN</p>
+                <h3>Preparar o combinar productos</h3>
+              } @else {
+                <p class="eyebrow">MOVIMIENTO</p>
+                <h3>Levantamiento y ajuste</h3>
+              }
+            </div>
+            <button type="button" class="modal-close" (click)="closeModal()" aria-label="Cerrar">×</button>
+          </header>
+
+          @if (activeModal === 'create') {
+            <p class="modal-description">Crea el producto que después podrás comprar, ajustar o usar como resultado de una preparación.</p>
+            <form (ngSubmit)="create()">
+              <input name="name" [(ngModel)]="name" placeholder="Nombre del producto" required /><select name="unit" [(ngModel)]="unit">
+                <option value="ML">mL</option>
+                <option value="G">g</option>
+                <option value="UND">Unidad</option></select
+              ><input name="min" [(ngModel)]="minStock" type="number" min="0" placeholder="Existencia mínima" />
+              <div class="modal-footer">
+                <button type="button" class="secondary-button" (click)="closeModal()">Cancelar</button><button>Guardar producto</button>
+              </div>
+            </form>
+          }
+
+          @if (activeModal === 'transform') {
+            <p class="modal-description">
+              El producto obtenido recibirá la suma de los costos de cada insumo usado, aunque tengan unidades diferentes.
+            </p>
+            <form (ngSubmit)="addTransformationLine()">
+              <select name="outputProduct" [(ngModel)]="outputProductId" required>
+                <option value="" disabled>Producto obtenido</option>
+                @for (i of inventory; track i.productId) {
+                  <option [value]="i.productId">{{ i.product.name }} ({{ i.product.baseUnit }})</option>
+                }</select
+              ><select name="inputProduct" [(ngModel)]="inputProductId" required>
+                <option value="" disabled>Producto origen</option>
+                @for (i of availableInputs; track i.productId) {
+                  <option [value]="i.productId">{{ i.product.name }} · disponible {{ i.quantity }} {{ i.product.baseUnit }}</option>
+                }</select
+              ><input
+                name="inputQuantity"
+                [(ngModel)]="inputQuantity"
+                type="number"
+                min="0.0001"
+                step="0.0001"
+                placeholder="Cantidad a usar"
+                required
+              /><button>Agregar insumo</button>
+            </form>
+            @if (transformationLines.length) {
+              <div class="modal-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Producto origen</th>
+                      <th>Cantidad</th>
+                      <th>Costo usado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (line of transformationLines; track line.productId) {
+                      <tr>
+                        <td>{{ line.name }}</td>
+                        <td>{{ line.quantity }} {{ line.baseUnit }}</td>
+                        <td>₡{{ line.totalCost }}</td>
+                        <td><button type="button" (click)="removeTransformationLine(line.productId)">Quitar</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            <form (ngSubmit)="saveTransformation()">
+              <input
+                name="outputQuantity"
+                [(ngModel)]="outputQuantity"
+                type="number"
+                min="0.0001"
+                step="0.0001"
+                placeholder="Cantidad obtenida"
+                required
+              /><input name="transformationNotes" [(ngModel)]="transformationNotes" placeholder="Observación de preparación" />
+              <p class="cost-summary">
+                Costo de insumos: <strong>₡{{ transformationCost }}</strong>
+              </p>
+              <div class="modal-footer">
+                <button type="button" class="secondary-button" (click)="closeModal()">Cancelar</button
+                ><button [disabled]="transformationLines.length < 2">Guardar preparación</button>
+              </div>
+            </form>
+          }
+
+          @if (activeModal === 'adjust') {
+            <p class="modal-description">
+              Registra el inventario inicial o una corrección con su motivo para conservar el kardex trazable.
+            </p>
+            <form (ngSubmit)="adjust()">
+              <select name="product" [(ngModel)]="adjustProduct" required>
+                <option value="" disabled>Producto</option>
+                @for (i of inventory; track i.productId) {
+                  <option [value]="i.productId">{{ i.product.name }}</option>
+                }</select
+              ><select name="type" [(ngModel)]="adjustType">
+                <option value="INITIAL">Inventario inicial</option>
+                <option value="ADJUSTMENT_IN">Entrada de ajuste</option>
+                <option value="ADJUSTMENT_OUT">Salida de ajuste</option></select
+              ><input name="quantity" [(ngModel)]="adjustQuantity" type="number" min="0.0001" placeholder="Cantidad" required />
+              @if (adjustType === 'INITIAL') {
+                <input name="cost" [(ngModel)]="unitCost" type="number" min="0.000001" placeholder="Costo unitario obligatorio" required />
+              }
+              <input name="reason" [(ngModel)]="adjustReason" placeholder="Motivo" required />
+              <div class="modal-footer">
+                <button type="button" class="secondary-button" (click)="closeModal()">Cancelar</button
+                ><button>{{ adjustType === 'INITIAL' ? 'Guardar inventario inicial' : 'Guardar ajuste' }}</button>
+              </div>
+            </form>
+          }
+        </section>
+      </div>
+    }
+
     @if (detail) {
-      <div class="detail">
-        <h3>Kardex · {{ detail.product.name }}</h3>
-        @for (m of movements; track m.id) {
-          <p>{{ m.occurredAt | slice: 0 : 10 }} · {{ m.referenceType }} · {{ m.quantity }} · saldo {{ m.quantityAfter }} · {{ m.notes }}</p>
-        }
-        <button (click)="detail = undefined">Cerrar</button>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true">
+          <header class="modal-header">
+            <h3>Kardex · {{ detail.product.name }}</h3>
+            <button type="button" class="modal-close" (click)="detail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <div class="modal-scroll">
+            @for (m of movements; track m.id) {
+              <p>
+                {{ m.occurredAt | slice: 0 : 10 }} · {{ m.referenceType }} · {{ m.quantity }} · saldo {{ m.quantityAfter }} · {{ m.notes }}
+              </p>
+            }
+          </div>
+          <div class="modal-footer"><button type="button" (click)="detail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
     @if (transformationDetail) {
-      <div class="detail">
-        <h3>{{ transformationDetail.code }} · {{ transformationDetail.outputProduct.name }}</h3>
-        <p>
-          <strong>Producto obtenido:</strong> {{ transformationDetail.outputQuantity }} {{ transformationDetail.outputProduct.baseUnit }} ·
-          ₡{{ transformationDetail.totalCost }}
-        </p>
-        @for (item of transformationDetail.items; track item.product.name) {
-          <p>{{ item.product.name }}: {{ item.quantity }} {{ item.product.baseUnit }} · ₡{{ item.totalCost }}</p>
-        }
-        @if (transformationDetail.notes) {
-          <p><strong>Observación:</strong> {{ transformationDetail.notes }}</p>
-        }
-        <button type="button" (click)="transformationDetail = undefined">Cerrar</button>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true">
+          <header class="modal-header">
+            <h3>{{ transformationDetail.code }} · {{ transformationDetail.outputProduct.name }}</h3>
+            <button type="button" class="modal-close" (click)="transformationDetail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <p>
+            <strong>Producto obtenido:</strong> {{ transformationDetail.outputQuantity }}
+            {{ transformationDetail.outputProduct.baseUnit }} · ₡{{ transformationDetail.totalCost }}
+          </p>
+          @for (item of transformationDetail.items; track item.product.name) {
+            <p>{{ item.product.name }}: {{ item.quantity }} {{ item.product.baseUnit }} · ₡{{ item.totalCost }}</p>
+          }
+          @if (transformationDetail.notes) {
+            <p><strong>Observación:</strong> {{ transformationDetail.notes }}</p>
+          }
+          <div class="modal-footer"><button type="button" (click)="transformationDetail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,
 })
 export class InventoryPanelComponent {
   inventory: Item[] = [];
+  transformations: Transformation[] = [];
+  movements: Move[] = [];
+  activeModal: InventoryModal = null;
+  detail?: Item;
+  transformationDetail?: Transformation;
   name = '';
   unit = 'ML';
   minStock: number | null = null;
@@ -205,16 +290,12 @@ export class InventoryPanelComponent {
   adjustQuantity: number | null = null;
   unitCost: number | null = null;
   adjustReason = 'Levantamiento inicial';
-  detail?: Item;
-  movements: Move[] = [];
   outputProductId = '';
   inputProductId = '';
   inputQuantity: number | null = null;
   outputQuantity: number | null = null;
   transformationNotes = '';
   transformationLines: TransformationLine[] = [];
-  transformations: Transformation[] = [];
-  transformationDetail?: Transformation;
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
@@ -234,14 +315,21 @@ export class InventoryPanelComponent {
       this.cdr.detectChanges();
     });
   }
+  openModal(modal: Exclude<InventoryModal, null>) {
+    this.activeModal = modal;
+  }
+  closeModal() {
+    this.activeModal = null;
+  }
   create() {
-    if (!this.name) return;
+    if (!this.name.trim()) return;
     this.http
       .post('http://localhost:3000/api/v1/products', { name: this.name, baseUnit: this.unit, minStock: this.minStock ?? 0 })
       .subscribe({
         next: () => {
           this.name = '';
           this.minStock = null;
+          this.closeModal();
           this.load();
         },
         error: (error) => window.alert(error.error?.message ?? 'No fue posible crear el producto.'),
@@ -304,6 +392,7 @@ export class InventoryPanelComponent {
           this.inputProductId = '';
           this.outputQuantity = null;
           this.transformationNotes = '';
+          this.closeModal();
           this.load();
         },
         error: (error) => window.alert(error.error?.message ?? 'No fue posible guardar la preparación.'),
@@ -339,6 +428,7 @@ export class InventoryPanelComponent {
           this.adjustQuantity = null;
           this.unitCost = null;
           this.adjustReason = initial ? 'Levantamiento inicial' : '';
+          this.closeModal();
           this.load();
         },
         error: (error) => window.alert(error.error?.message ?? 'No fue posible ajustar el inventario.'),
