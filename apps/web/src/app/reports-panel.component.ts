@@ -41,57 +41,63 @@ type Report = {
       /><button [disabled]="!cropId">Consultar reporte</button>
     </form>
     @if (report) {
-      <div class="detail report-modal" role="dialog" aria-modal="true">
-        <div class="report-heading">
-          <span>REPORTE DE CICLO</span>
-          <h3>{{ report.crop.lot.farm.name }} · {{ report.crop.lot.name }} · {{ report.crop.name }}</h3>
-        </div>
-        <div class="report-section">
-          <h4>Producción e ingresos</h4>
-          <p>
-            <span>Cajas producidas</span><strong>{{ report.productionBoxes }}</strong>
-          </p>
-          <p>
-            <span>Valor de cosecha</span><strong>₡{{ report.harvestValue }}</strong>
-          </p>
-          <p>
-            <span>Ventas registradas</span><strong>₡{{ report.salesRevenue }}</strong>
-          </p>
-          <p>
-            <span>Ingreso realizado</span><strong>₡{{ report.realizedRevenue }}</strong>
-          </p>
-          <small>{{
-            report.incomeSource === 'VENTAS_REGISTRADAS'
-              ? 'Calculado con ventas registradas.'
-              : 'Calculado con precios confirmados de cosecha.'
-          }}</small>
-        </div>
-        <div class="report-section">
-          <h4>Costos del ciclo</h4>
-          <p>
-            <span>Aplicaciones</span><strong>₡{{ report.applicationCost }}</strong>
-          </p>
-          <p>
-            <span>Gastos</span><strong>₡{{ report.expenseCost }}</strong>
-          </p>
-          <p>
-            <span>Transporte</span><strong>₡{{ report.transportCost }}</strong>
-          </p>
-          <p class="total">
-            <span>Costo total</span><strong>₡{{ report.totalCost }}</strong>
-          </p>
-        </div>
-        <div class="profit-grid">
-          <div>
-            <span>Ganancia estimada</span><strong>₡{{ report.estimatedProfit }}</strong
-            ><small>{{ report.estimatedProfitabilityPercent }}% de rentabilidad</small>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card report-modal" role="dialog" aria-modal="true" aria-label="Reporte de ciclo">
+          <header class="modal-header">
+            <p class="eyebrow">REPORTE</p>
+            <button type="button" class="modal-close" (click)="report = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <div class="report-heading">
+            <span>REPORTE DE CICLO</span>
+            <h3>{{ report.crop.lot.farm.name }} · {{ report.crop.lot.name }} · {{ report.crop.name }}</h3>
           </div>
-          <div>
-            <span>Ganancia realizada</span><strong>₡{{ report.realizedProfit }}</strong
-            ><small>{{ report.realizedProfitabilityPercent }}% de rentabilidad</small>
+          <div class="report-section">
+            <h4>Producción e ingresos</h4>
+            <p>
+              <span>Cajas producidas</span><strong>{{ report.productionBoxes }}</strong>
+            </p>
+            <p>
+              <span>Valor de cosecha</span><strong>₡{{ report.harvestValue }}</strong>
+            </p>
+            <p>
+              <span>Ventas registradas</span><strong>₡{{ report.salesRevenue }}</strong>
+            </p>
+            <p>
+              <span>Ingreso realizado</span><strong>₡{{ report.realizedRevenue }}</strong>
+            </p>
+            <small>{{
+              report.incomeSource === 'VENTAS_REGISTRADAS'
+                ? 'Calculado con ventas registradas.'
+                : 'Calculado con precios confirmados de cosecha.'
+            }}</small>
           </div>
-        </div>
-        <button type="button" (click)="report = undefined">Cerrar</button>
+          <div class="report-section">
+            <h4>Costos del ciclo</h4>
+            <p>
+              <span>Aplicaciones</span><strong>₡{{ report.applicationCost }}</strong>
+            </p>
+            <p>
+              <span>Gastos</span><strong>₡{{ report.expenseCost }}</strong>
+            </p>
+            <p>
+              <span>Transporte</span><strong>₡{{ report.transportCost }}</strong>
+            </p>
+            <p class="total">
+              <span>Costo total</span><strong>₡{{ report.totalCost }}</strong>
+            </p>
+          </div>
+          <div class="profit-grid">
+            <div>
+              <span>Ganancia estimada</span><strong>₡{{ report.estimatedProfit }}</strong
+              ><small>{{ report.estimatedProfitabilityPercent }}% de rentabilidad</small>
+            </div>
+            <div>
+              <span>Ganancia realizada</span><strong>₡{{ report.realizedProfit }}</strong
+              ><small>{{ report.realizedProfitabilityPercent }}% de rentabilidad</small>
+            </div>
+          </div>
+          <div class="modal-footer"><button type="button" (click)="report = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,

@@ -10,6 +10,7 @@ type App = {
   code: string;
   appliedAt: string;
   totalCost: string;
+  notes?: string;
   lot: { name: string; farm: { name: string } };
   crop?: { name: string };
   items: { product: { name: string; baseUnit: string }; quantity: string; totalCost: string }[];
@@ -72,19 +73,31 @@ type App = {
       </tbody>
     </table>
     @if (detail) {
-      <div class="detail">
-        <h3>{{ detail.code }}</h3>
-        <p>
-          <strong>Finca:</strong> {{ detail.lot.farm.name }} · <strong>Lote:</strong> {{ detail.lot.name }} · <strong>Cultivo:</strong>
-          {{ detail.crop?.name || 'No especificado' }}
-        </p>
-        @for (i of detail.items; track i.product.name) {
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-label="Detalle de aplicación">
+          <header class="modal-header">
+            <div>
+              <p class="eyebrow">APLICACIÓN</p>
+              <h3>Detalle de aplicación</h3>
+            </div>
+            <button type="button" class="modal-close" (click)="detail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <h3>{{ detail.code }}</h3>
           <p>
-            {{ i.product.name }} · {{ i.quantity }}
-            {{ i.product.baseUnit === 'ML' ? 'mL' : i.product.baseUnit === 'G' ? 'g' : 'unidades' }} · ₡{{ i.totalCost }}
+            <strong>Finca:</strong> {{ detail.lot.farm.name }} · <strong>Lote:</strong> {{ detail.lot.name }} · <strong>Cultivo:</strong>
+            {{ detail.crop?.name || 'No especificado' }}
           </p>
-        }
-        <button (click)="detail = undefined">Cerrar</button>
+          @for (i of detail.items; track i.product.name) {
+            <p>
+              {{ i.product.name }} · {{ i.quantity }}
+              {{ i.product.baseUnit === 'ML' ? 'mL' : i.product.baseUnit === 'G' ? 'g' : 'unidades' }} · ₡{{ i.totalCost }}
+            </p>
+          }
+          @if (detail.notes) {
+            <p><strong>Observación:</strong> {{ detail.notes }}</p>
+          }
+          <div class="modal-footer"><button type="button" (click)="detail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,

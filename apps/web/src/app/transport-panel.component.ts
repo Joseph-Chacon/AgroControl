@@ -44,11 +44,20 @@ type Trip = { id: string; tripDate: string; amount: string; notes?: string; crop
       </tbody>
     </table>
     @if (detail) {
-      <div class="detail">
-        <h3>Viaje</h3>
-        <p>{{ detail.notes || 'Sin observación' }}</p>
-        <p>₡{{ detail.amount }}</p>
-        <button (click)="detail = undefined">Cerrar</button>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-label="Detalle de viaje">
+          <header class="modal-header">
+            <div>
+              <p class="eyebrow">VIAJE</p>
+              <h3>Detalle de viaje</h3>
+            </div>
+            <button type="button" class="modal-close" (click)="detail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <h3>Viaje</h3>
+          <p>{{ detail.notes || 'Sin observación' }}</p>
+          <p>₡{{ detail.amount }}</p>
+          <div class="modal-footer"><button type="button" (click)="detail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,

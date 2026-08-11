@@ -45,11 +45,20 @@ type Expense = { id: string; occurredAt: string; description: string; amount: st
       </tbody>
     </table>
     @if (detail) {
-      <div class="detail">
-        <h3>Gasto</h3>
-        <p>{{ detail.crop.lot.farm.name }} · {{ detail.crop.lot.name }} · {{ detail.crop.name }}</p>
-        <p>{{ detail.description }} · ₡{{ detail.amount }}</p>
-        <button (click)="detail = undefined">Cerrar</button>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-label="Detalle de gasto">
+          <header class="modal-header">
+            <div>
+              <p class="eyebrow">GASTO</p>
+              <h3>Detalle de gasto</h3>
+            </div>
+            <button type="button" class="modal-close" (click)="detail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <h3>Gasto</h3>
+          <p>{{ detail.crop.lot.farm.name }} · {{ detail.crop.lot.name }} · {{ detail.crop.name }}</p>
+          <p>{{ detail.description }} · ₡{{ detail.amount }}</p>
+          <div class="modal-footer"><button type="button" (click)="detail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,

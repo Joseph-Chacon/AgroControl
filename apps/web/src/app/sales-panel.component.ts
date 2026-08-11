@@ -57,12 +57,21 @@ type Sale = { id: string; code: string; soldAt: string; total: string; crop: Cro
       </tbody>
     </table>
     @if (detail) {
-      <div class="detail">
-        <h3>{{ detail.code }}</h3>
-        <p>{{ detail.crop.lot.farm.name }} · {{ detail.crop.lot.name }} · {{ detail.crop.name }}</p>
-        <p>Cliente: {{ detail.customer?.name || 'Sin cliente' }}</p>
-        <p>₡{{ detail.total }}</p>
-        <button (click)="detail = undefined">Cerrar</button>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-label="Detalle de venta">
+          <header class="modal-header">
+            <div>
+              <p class="eyebrow">VENTA</p>
+              <h3>Detalle de venta</h3>
+            </div>
+            <button type="button" class="modal-close" (click)="detail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <h3>{{ detail.code }}</h3>
+          <p>{{ detail.crop.lot.farm.name }} · {{ detail.crop.lot.name }} · {{ detail.crop.name }}</p>
+          <p>Cliente: {{ detail.customer?.name || 'Sin cliente' }}</p>
+          <p>₡{{ detail.total }}</p>
+          <div class="modal-footer"><button type="button" (click)="detail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,
