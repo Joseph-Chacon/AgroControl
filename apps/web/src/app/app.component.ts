@@ -456,7 +456,7 @@ export class AppComponent {
           this.loggedIn = true;
           this.loading = false;
           this.cdr.detectChanges();
-          setTimeout(() => this.loadInventory());
+          this.loadInventory();
         },
         error: (error: { error?: { message?: string } }) => {
           this.isError = true;
@@ -691,6 +691,12 @@ export class AppComponent {
     this.appRef.attachView(this.dashboardIndicatorsRef.hostView);
     host.appendChild(this.dashboardIndicatorsRef.location.nativeElement);
   }
+  private hideDashboardIndicators(): void {
+    if (!this.dashboardIndicatorsRef) return;
+    this.appRef.detachView(this.dashboardIndicatorsRef.hostView);
+    this.dashboardIndicatorsRef.destroy();
+    this.dashboardIndicatorsRef = undefined;
+  }
   private showReports(): void {
     if (this.reportsRef) return;
     this.selectedModule = '';
@@ -790,6 +796,7 @@ export class AppComponent {
   }
   logout(): void {
     this.closeModule();
+    this.hideDashboardIndicators();
     sessionStorage.removeItem('agrocontrol_token');
     sessionStorage.removeItem('agrocontrol_user_id');
     this.loggedIn = false;

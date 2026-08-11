@@ -44,7 +44,16 @@ type InventoryModal = 'create' | 'transform' | 'adjust' | null;
       </div>
     </div>
 
-    <h3>Existencias actuales</h3>
+    <div class="table-heading">
+      <h3>Búsqueda</h3>
+      <input
+        class="inventory-search"
+        name="inventorySearch"
+        [(ngModel)]="inventorySearch"
+        placeholder="Buscar producto..."
+        aria-label="Buscar producto en inventario"
+      />
+    </div>
     <table>
       <thead>
         <tr>
@@ -56,19 +65,22 @@ type InventoryModal = 'create' | 'transform' | 'adjust' | null;
         </tr>
       </thead>
       <tbody>
-        @for (i of inventory; track i.productId) {
+        @for (i of filteredInventory; track i.productId) {
           <tr [class.low]="isLow(i)">
             <td>{{ i.product.name }}</td>
             <td>{{ i.quantity }} {{ i.product.baseUnit }}</td>
             <td>{{ i.product.minStock || '—' }}</td>
             <td>₡{{ i.averageCost }}</td>
             <td>
-              <button type="button" (click)="setMinimum(i)">Definir mínimo</button><button type="button" (click)="kardex(i)">Kardex</button>
+              <button type="button" (click)="setMinimum(i)">Definir mínimo</button><button type="button" (click)="kardex(i)">Movimientos</button>
             </td>
           </tr>
         }
       </tbody>
     </table>
+    @if (!filteredInventory.length) {
+      <p class="status">No hay productos que coincidan con la búsqueda.</p>
+    }
 
     <h3>Preparaciones recientes</h3>
     @if (transformations.length) {
@@ -277,6 +289,7 @@ type InventoryModal = 'create' | 'transform' | 'adjust' | null;
 })
 export class InventoryPanelComponent {
   inventory: Item[] = [];
+  inventorySearch = '';
   transformations: Transformation[] = [];
   movements: Move[] = [];
   activeModal: InventoryModal = null;
@@ -308,6 +321,10 @@ export class InventoryPanelComponent {
       this.cdr.detectChanges();
     });
     this.loadTransformations();
+  }
+  get filteredInventory() {
+    const search = this.inventorySearch.trim().toLocaleLowerCase();
+    return search ? this.inventory.filter((item) => item.product.name.toLocaleLowerCase().includes(search)) : this.inventory;
   }
   loadTransformations() {
     this.http.get<Transformation[]>('http://localhost:3000/api/v1/inventory/transformations').subscribe((x) => {
@@ -401,12 +418,10 @@ export class InventoryPanelComponent {
   voidTransformation(transformation: Transformation) {
     const reason = window.prompt(`Motivo para anular ${transformation.code}:`);
     if (!reason || reason.trim().length < 3) return;
-    this.http
-      .patch(`http://localhost:3000/api/v1/inventory/transformations/${transformation.id}/void`, { reason })
-      .subscribe({
-        next: () => this.load(),
-        error: (error) => window.alert(error.error?.message ?? 'No fue posible anular la preparación.'),
-      });
+    this.http.patch(`http://localhost:3000/api/v1/inventory/transformations/${transformation.id}/void`, { reason }).subscribe({
+      next: () => this.load(),
+      error: (error) => window.alert(error.error?.message ?? 'No fue posible anular la preparación.'),
+    });
   }
   adjust() {
     const initial = this.adjustType === 'INITIAL';

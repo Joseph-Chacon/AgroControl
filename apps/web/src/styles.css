@@ -159,6 +159,7 @@ button {
 }
 
 .workspace table {
+  display: block;
   width: 100% !important;
   margin: 18px 0 !important;
   border: 1px solid #e0ece2 !important;
@@ -169,11 +170,30 @@ button {
   background: #fff;
 }
 
+.workspace table thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.workspace table tbody {
+  display: block;
+  max-height: 330px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.workspace table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
 .workspace th,
 .workspace td {
   padding: 12px !important;
   border-bottom: 1px solid #e3ece4 !important;
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 }
 
@@ -194,8 +214,19 @@ button {
 }
 
 /* Acciones consecutivas de una fila: consultar, anular, editar, etc. */
+.workspace th:last-child,
+.workspace td:last-child {
+  width: 210px;
+  min-width: 210px;
+}
+
+.workspace td:last-child > button {
+  margin: 4px !important;
+  vertical-align: middle;
+}
+
 .workspace td button + button {
-  margin-left: 8px !important;
+  margin-left: 4px !important;
 }
 
 /* El último botón de las acciones documentales es la anulación. */
@@ -360,6 +391,23 @@ body:has(.detail) {
   gap: 10px;
 }
 
+.table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.table-heading h3 {
+  margin: 0;
+}
+
+.inventory-search {
+  width: min(320px, 100%);
+  margin: 0 !important;
+}
+
 .inventory-actions button:nth-child(2) {
   background: #27794a !important;
 }
@@ -462,6 +510,7 @@ body:has(.detail) {
 }
 
 .modal-card table {
+  display: block;
   width: 100%;
   margin: 18px 0;
   border: 1px solid #e0ece2;
@@ -469,6 +518,25 @@ body:has(.detail) {
   border-spacing: 0;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.modal-card table thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.modal-card table tbody {
+  display: block;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.modal-card table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .modal-card th,
@@ -526,6 +594,14 @@ body:has(.modal-backdrop) {
   .inventory-actions {
     justify-content: flex-start;
     margin-top: 18px;
+  }
+
+  .table-heading {
+    display: block;
+  }
+
+  .inventory-search {
+    margin-top: 12px !important;
   }
 
   .modal-backdrop {

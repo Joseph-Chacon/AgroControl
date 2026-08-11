@@ -109,12 +109,21 @@ type SupplierReport = { id: string; name: string; purchaseCount: number; totalPu
       </tbody>
     </table>
     @if (detail) {
-      <div class="detail">
-        <h3>{{ detail.code }} · {{ detail.supplier.name }}</h3>
-        @for (item of detail.items; track item.product.name) {
-          <p>{{ item.product.name }}: {{ item.quantity }} {{ item.product.baseUnit }} · ₡{{ item.totalCost }}</p>
-        }
-        <button type="button" (click)="detail = undefined">Cerrar</button>
+      <div class="modal-backdrop" role="presentation">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-label="Detalle de compra">
+          <header class="modal-header">
+            <div>
+              <p class="eyebrow">COMPRA</p>
+              <h3>Detalle de compra</h3>
+            </div>
+            <button type="button" class="modal-close" (click)="detail = undefined" aria-label="Cerrar">×</button>
+          </header>
+          <h3>{{ detail.code }} · {{ detail.supplier.name }}</h3>
+          @for (item of detail.items; track item.product.name) {
+            <p>{{ item.product.name }}: {{ item.quantity }} {{ item.product.baseUnit }} · ₡{{ item.totalCost }}</p>
+          }
+          <div class="modal-footer"><button type="button" (click)="detail = undefined">Cerrar</button></div>
+        </section>
       </div>
     }
   </section>`,

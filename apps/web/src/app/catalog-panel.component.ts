@@ -21,7 +21,12 @@ type Farm = { id: string; name: string; lots: Lot[] };
         @for (p of products; track p.id) {
           <tr>
             <td>{{ p.name }} · {{ p.baseUnit }}</td>
-            <td><button (click)="editProduct(p)">Editar</button><button (click)="deactivate('products', p.id)">Desactivar</button></td>
+            <td>
+              <div class="catalog-actions">
+                <button class="catalog-button" (click)="editProduct(p)">Editar</button>
+                <button class="catalog-button catalog-button-danger" (click)="deactivate('products', p.id)">Desactivar</button>
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -32,7 +37,12 @@ type Farm = { id: string; name: string; lots: Lot[] };
         @for (s of suppliers; track s.id) {
           <tr>
             <td>{{ s.name }}</td>
-            <td><button (click)="editSupplier(s)">Editar</button><button (click)="deactivate('suppliers', s.id)">Desactivar</button></td>
+            <td>
+              <div class="catalog-actions">
+                <button class="catalog-button" (click)="editSupplier(s)">Editar</button>
+                <button class="catalog-button catalog-button-danger" (click)="deactivate('suppliers', s.id)">Desactivar</button>
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -44,7 +54,10 @@ type Farm = { id: string; name: string; lots: Lot[] };
           <tr>
             <td>{{ c.name }}</td>
             <td>
-              <button (click)="editCustomer(c)">Editar</button><button (click)="deactivate('finance/customers', c.id)">Desactivar</button>
+              <div class="catalog-actions">
+                <button class="catalog-button" (click)="editCustomer(c)">Editar</button>
+                <button class="catalog-button catalog-button-danger" (click)="deactivate('finance/customers', c.id)">Desactivar</button>
+              </div>
             </td>
           </tr>
         }
@@ -53,21 +66,31 @@ type Farm = { id: string; name: string; lots: Lot[] };
     <h3>Fincas, lotes y cultivos</h3>
     @for (f of farms; track f.id) {
       <article>
-        <strong>{{ f.name }}</strong
-        ><button (click)="editName('agriculture/farms', f)">Editar</button
-        ><button (click)="deactivate('agriculture/farms', f.id)">Desactivar</button>
+        <div class="catalog-record">
+          <strong>{{ f.name }}</strong>
+          <div class="catalog-actions">
+            <button class="catalog-button" (click)="editName('agriculture/farms', f)">Editar</button>
+            <button class="catalog-button catalog-button-danger" (click)="deactivate('agriculture/farms', f.id)">Desactivar</button>
+          </div>
+        </div>
         @for (l of f.lots; track l.id) {
-          <p>
-            {{ l.name }} <button (click)="editName('agriculture/lots', l)">Editar</button
-            ><button (click)="deactivate('agriculture/lots', l.id)">Desactivar</button>
-          </p>
+          <div class="catalog-record catalog-record-indent">
+            <span>{{ l.name }}</span>
+            <div class="catalog-actions">
+              <button class="catalog-button" (click)="editName('agriculture/lots', l)">Editar</button>
+              <button class="catalog-button catalog-button-danger" (click)="deactivate('agriculture/lots', l.id)">Desactivar</button>
+            </div>
+          </div>
           @for (c of l.crops; track c.id) {
-            <p>
-              {{ c.name }} <button (click)="editName('agriculture/crops', c)">Editar</button>
-              @if (c.isActive) {
-                <button (click)="closeCrop(c.id)">Finalizar</button>
-              }
-            </p>
+            <div class="catalog-record catalog-record-indent crop-record">
+              <span>{{ c.name }}</span>
+              <div class="catalog-actions">
+                <button class="catalog-button" (click)="editName('agriculture/crops', c)">Editar</button>
+                @if (c.isActive) {
+                  <button class="catalog-button catalog-button-danger" (click)="closeCrop(c.id)">Finalizar</button>
+                }
+              </div>
+            </div>
           }
         }
       </article>
@@ -88,14 +111,50 @@ type Farm = { id: string; name: string; lots: Lot[] };
       padding: 8px;
       border-bottom: 1px solid #e3ece4;
     }
-    button {
-      margin-left: 6px;
+    .catalog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .catalog-button {
+      min-height: auto;
+      margin: 0 !important;
+      padding: 7px 12px !important;
+      font-size: 0.84rem;
+      line-height: 1.15;
+    }
+    .catalog-button-danger {
+      background: #b84035 !important;
+    }
+    .catalog-record {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .catalog-record-indent {
+      padding-left: 10px;
+    }
+    .crop-record {
+      padding-left: 22px;
     }
     article {
       margin: 12px 0;
       padding: 10px;
       border: 1px solid #e3ece4;
       border-radius: 8px;
+    }
+    @media (max-width: 700px) {
+      .catalog-record {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .catalog-actions {
+        justify-content: flex-start;
+      }
     }
   `,
 })
